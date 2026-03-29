@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import { getHistory } from '../services/api'; // 🔥 IMPORT THE DYNAMIC API FUNCTION
+import { getHistory } from '../services/api';
+import html2pdf from 'html2pdf.js';
+import ClinicalReportPDF from '../components/ClinicalReportPDF';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ export default function Reports() {
   const [userEmail, setUserEmail] = useState('user@medgenix.ai');
   const [userInitial, setUserInitial] = useState('U');
   
-  const [reportsData, setReportsData] = useState([]); // 🔥 NO MORE MOCK DATA
+  const [reportsData, setReportsData] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   // --- UI State ---
@@ -26,7 +28,6 @@ export default function Reports() {
 
   // --- Initialize & Fetch Data ---
   useEffect(() => {
-    // 1. Verify User Token
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
@@ -43,7 +44,6 @@ export default function Reports() {
       }
     }
 
-    // 2. Fetch Report History from MongoDB
     const fetchHistory = async () => {
         setLoading(true);
         const data = await getHistory();
@@ -75,12 +75,10 @@ export default function Reports() {
   // --- Derived Filtered Data ---
   const filteredData = useMemo(() => {
     return reportsData.filter(item => {
-      // 1. Apply Tag Filter
       if (filter === 'detected' && item.result !== 'detected') return false;
       if (filter === 'healthy' && item.result !== 'healthy') return false;
       if (['high', 'moderate', 'low'].includes(filter) && item.risk !== filter) return false;
       
-      // 2. Apply Search Filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -101,6 +99,31 @@ export default function Reports() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  // --- PDF Download Handler ---
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('pdf-report-template');
+    if (!element) return;
+
+    // Show element briefly for html2canvas
+    element.style.display = 'block';
+
+    const opt = {
+      margin: 0,
+      filename: activeReportDetails?.file || `MedGenix_Report_${Date.now()}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, windowWidth: 794 },
+      jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait', hotfixes: ['px_scaling'] },
+      pagebreak: { mode: 'css', avoid: 'tr' } // 🔥 CRITICAL FIX: Forces html2pdf to respect our page breaks
+    };
+
+    setTimeout(() => {
+      html2pdf().from(element).set(opt).save().then(() => {
+        // Hide element again
+        element.style.display = 'none';
+      });
+    }, 500); // 500ms delay to let CSS layout settle before screenshot
   };
 
   return (
@@ -124,7 +147,6 @@ export default function Reports() {
           <button className="text-[13px] font-medium px-4 py-2 rounded-lg bg-[#111827] border border-white/5 text-[#6b7a99] hover:border-white/15 hover:text-white transition-all flex items-center gap-2" onClick={() => navigate('/chat')}>💬 AI Chat</button>
           <div className="w-px h-5 bg-white/10 mx-2"></div>
           
-          {/* USER PROFILE DROPDOWN */}
           <div className="relative group cursor-pointer">
             <div className="flex items-center gap-2.5 bg-[#111827] border border-white/5 rounded-lg px-3 py-1.5 hover:bg-[#1a2035] transition-colors">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c5cfc] to-[#f472b6] flex items-center justify-center text-[11px] font-bold text-white shadow-inner">{userInitial}</div>
@@ -142,7 +164,6 @@ export default function Reports() {
       {/* 2. MAIN CONTENT */}
       <div className="max-w-[1400px] mx-auto w-full px-8 py-8 flex-1 flex flex-col">
         
-        {/* Header Row */}
         <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
           <div>
             <h1 className="font-['Syne'] text-[28px] font-extrabold text-white mb-1.5 tracking-tight">Clinical Report History</h1>
@@ -156,7 +177,6 @@ export default function Reports() {
           </button>
         </div>
 
-        {/* Dynamic Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#a78bfa]"></div>
@@ -184,7 +204,6 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Filter & Search Bar */}
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <span className="text-[12px] text-[#6b7a99] font-mono font-medium tracking-wide">Filter:</span>
           {[
@@ -219,7 +238,6 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Data Table */}
         <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl overflow-hidden shadow-lg flex-1 flex flex-col relative">
           
           {loading && (
@@ -296,7 +314,6 @@ export default function Reports() {
               </tbody>
             </table>
             
-            {/* Empty State */}
             {!loading && filteredData.length === 0 && (
               <div className="py-16 text-center text-[#6b7a99]">
                 <div className="text-[40px] opacity-40 mb-3">🗄️</div>
@@ -306,7 +323,6 @@ export default function Reports() {
             )}
           </div>
           
-          {/* Pagination */}
           <div className="mt-auto px-6 py-4 border-t border-white/5 bg-[#111827]/50 flex items-center justify-between">
             <span className="text-[12px] text-[#6b7a99]">Showing {filteredData.length > 0 ? '1' : '0'}–{filteredData.length} reports</span>
           </div>
@@ -318,7 +334,6 @@ export default function Reports() {
         <div className="fixed inset-0 z-50 bg-[#030508]/90 backdrop-blur-sm flex items-center justify-center p-4 animate-[fi_0.2s_ease_out]">
           <div className="bg-[#0c0f1a] border border-white/10 rounded-[24px] w-full max-w-[680px] max-h-[90vh] flex flex-col relative shadow-2xl">
             
-            {/* Modal Header */}
             <div className="px-8 py-6 border-b border-white/10 flex items-start justify-between shrink-0">
               <div>
                 <h2 className="font-['Syne'] text-[22px] font-extrabold text-white tracking-tight mb-1">MedGenix AI Clinical Report</h2>
@@ -332,7 +347,6 @@ export default function Reports() {
               </button>
             </div>
 
-            {/* Modal Scrollable Content */}
             <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-6">
               
               <div className="grid grid-cols-2 gap-4">
@@ -367,11 +381,11 @@ export default function Reports() {
 
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#a78bfa] font-semibold">Model Analysis</span>
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#a78bfa] font-semibold">AI Clinical Insight (Gemini)</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                 </div>
-                <p className="text-[13px] text-[#8b9bb4] leading-[1.65] bg-[#111827] p-4 rounded-xl border border-white/5">
-                  The prediction is based on patterns observed in voice biomarkers such as pitch variation (MDVP:Fo), amplitude instability (Shimmer), and frequency irregularities (Jitter). The Random Forest ensemble model analyzed all 22 features simultaneously.
+                <p className="text-[13px] text-[#8b9bb4] leading-[1.65] bg-[#111827] p-4 rounded-xl border border-[#a78bfa]/20 shadow-inner">
+                  {activeReportDetails.ai_summary || "No AI summary was generated for this historical report."}
                 </p>
               </div>
 
@@ -404,8 +418,13 @@ export default function Reports() {
             {/* Modal Actions */}
             <div className="px-8 py-5 border-t border-white/10 flex items-center gap-3 shrink-0 bg-[#0c0f1a] rounded-b-[24px]">
               <button 
+                onClick={handleDownloadPDF}
+                className="flex-1 py-3 rounded-xl bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#4ade80]/20 hover:text-white transition-all shadow-sm"
+              >
+                ↓ Download PDF Report
+              </button>
+              <button 
                 onClick={() => {
-                    // Navigate to Chat and pass the RAW report data context
                     navigate('/chat', { state: { reportContext: activeReportDetails._raw } })
                 }}
                 className="flex-1 py-3 rounded-xl bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#a78bfa] text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#7c5cfc]/20 hover:text-white transition-all shadow-sm"
@@ -417,6 +436,22 @@ export default function Reports() {
           </div>
         </div>
       )}
+
+      {/* Hidden Component for PDF Generation */}
+      <div className="hidden">
+        {activeReportDetails && (
+          <ClinicalReportPDF 
+            data={{
+              result: activeReportDetails._raw.result || activeReportDetails.result,
+              confidence: activeReportDetails.conf,
+              risk: activeReportDetails.risk.toUpperCase(),
+              ai_summary: activeReportDetails.ai_summary
+            }} 
+            formData={Array(22).fill('—')} 
+            userEmail={userEmail} 
+          />
+        )}
+      </div>
 
       {/* Embedded Animations */}
       <style dangerouslySetInnerHTML={{__html: `
