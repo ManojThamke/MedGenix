@@ -31,6 +31,91 @@ MedGenix is an AI-powered medical diagnostic system that detects Parkinson's dis
 
 ---
 
+## 🔄 How It Works
+
+MedGenix follows a straightforward end-to-end pipeline that takes voice biomarker data from the user and delivers an AI-powered Parkinson's disease risk assessment.
+
+### Step-by-Step Workflow
+
+```
+User Input (22 Voice Features)
+        │
+        ▼
+┌───────────────────┐
+│  React Frontend   │  ← User enters/uploads voice feature values
+│  (localhost:5173) │
+└────────┬──────────┘
+         │  HTTP POST /predict (JSON payload)
+         ▼
+┌───────────────────┐
+│  FastAPI Backend  │  ← Validates input (expects exactly 22 features)
+│  (localhost:8000) │     Scales features using pre-trained StandardScaler
+└────────┬──────────┘     Runs Ensemble ML Model (RF + SVM + LR)
+         │                Computes confidence score & risk level
+         ▼
+┌───────────────────┐
+│  ML Ensemble      │  ← Random Forest + SVM + Logistic Regression
+│  (best_model.pkl) │     Majority voting for final prediction
+└────────┬──────────┘
+         │  Prediction + Confidence + Risk Level
+         ▼
+┌───────────────────┐
+│  MongoDB Database │  ← Auto-saves prediction record with timestamp
+│  (medgenix)       │
+└────────┬──────────┘
+         │  JSON Response
+         ▼
+┌───────────────────┐
+│  React Frontend   │  ← Displays result card with risk badge
+│  Result Display   │     Offers PDF report download & chat options
+└───────────────────┘
+```
+
+### Detailed Stages
+
+#### 1. 🎙️ Voice Feature Input
+The user opens the **Dashboard** page and enters 22 numerical voice biomarkers (measured from a patient's speech recording). These include:
+- Fundamental frequency measures (MDVP:Fo, Fhi, Flo)
+- Jitter/Shimmer perturbation ratios (voice instability indicators)
+- Noise ratios (NHR, HNR) and nonlinear dynamics (RPDE, DFA, PPE)
+
+#### 2. 🌐 API Request
+The React frontend (`services/api.jsx`) sends the 22 features as a JSON array to the FastAPI backend at `POST /predict`.
+
+#### 3. ⚙️ Backend Processing (`backend/main.py`)
+- **Input validation**: Confirms exactly 22 features are received
+- **Feature scaling**: Applies the pre-trained `StandardScaler` (`scaler.pkl`) to normalize values
+- **ML Inference**: Passes scaled features through the ensemble model (`best_model.pkl`) for prediction
+- **Risk classification**:
+  - `confidence ≥ 80%` → **HIGH** risk
+  - `60% ≤ confidence < 80%` → **MODERATE** risk
+  - `confidence < 60%` → **LOW** risk
+
+#### 4. 🤖 Machine Learning Ensemble (`ml_engine/`)
+Three models were trained on the Parkinson's voice dataset and combined:
+- **Random Forest** – High accuracy, provides feature importance
+- **Support Vector Machine (SVM)** – Strong generalization
+- **Logistic Regression** – Probabilistic baseline
+
+The best-performing ensemble is saved as `backend/models/best_model.pkl`.
+
+#### 5. 🗄️ Data Persistence (`backend/utils/db.py`)
+Every prediction is automatically stored in MongoDB with:
+- Prediction result, confidence score, and risk level
+- Timestamp for audit trail and history tracking
+
+#### 6. 📄 Report Generation (`backend/routes/report.py`)
+Optionally, the user can request a clinical PDF report. The backend generates a timestamped PDF (`MedGenix_Report_YYYYMMDD_HHMMSS.pdf`) containing:
+- Prediction summary with risk badge
+- Voice feature analysis and key contributing indicators
+- AI-generated clinical insights (via Gemini)
+- Professional recommendations and medical disclaimer
+
+#### 7. 💬 Medical Chat Assistant (`backend/routes/chat.py`)
+The **Chat** page connects to Google Gemini API to answer medical questions about Parkinson's disease in real time, complementing the automated prediction with expert knowledge.
+
+---
+
 ## 🏗️ Architecture & Project Structure
 
 ```
