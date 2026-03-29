@@ -1,30 +1,44 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
 
-# Load env
 load_dotenv()
 
 router = APIRouter()
 
-# Get API key
+# Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    print("CRITICAL: GEMINI_API_KEY is missing from .env file.")
 genai.configure(api_key=api_key)
 
+# Use the stable flash model
 model = genai.GenerativeModel("gemini-flash-latest")
 
-# Request schema
 class ChatRequest(BaseModel):
     prompt: str
 
 @router.post("/chat")
-def chat(data: ChatRequest):
+def chat_endpoint(data: ChatRequest):
     try:
-        response = model.generate_content(
-    f"You are a medical assistant. Answer in context of Parkinson's disease.\nUser: {data.prompt}"
-)
+        # Manually inject the Medical Persona context into every prompt
+        # This is more robust than relying on system_instruction if SDK versions vary
+        medical_context = (
+            "You are Dr. MedGenix, an expert neurologist and AI clinical assistant. "
+            "Your role is to explain Parkinson's disease screening reports to patients "
+            "in a clear, highly professional, and empathetic manner. "
+            "Simplify complex acoustic biomarker terms (like Jitter, Shimmer, PPE, MDVP:Fo). "
+            "Provide actionable clinical next steps. Always maintain medical disclaimers. "
+            "Use markdown formatting (bolding, bullet points) for readability.\n\n"
+            f"Patient Inquiry: {data.prompt}"
+        )
+
+        response = model.generate_content(medical_context)
+
         return {"reply": response.text}
     except Exception as e:
-        return {"error": str(e)}
+        print(f"❌ Chat Backend Error: {str(e)}")
+        # Returning a clear error message helps debug if it fails again
+        return {"reply": f"System Alert: Backend encountered an error. Details: {str(e)}"}

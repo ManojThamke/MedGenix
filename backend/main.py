@@ -26,6 +26,7 @@ AudioSegment.ffprobe = FFPROBE_PATH
 # -------------------------------
 from routes.chat import router as chat_router
 from routes.report import router as report_router
+from routes.auth import router as auth_router
 
 # DB
 from utils.db import reports_collection
@@ -34,6 +35,7 @@ from utils.db import reports_collection
 from utils.voice_features import extract_features
 
 app = FastAPI()
+app.include_router(auth_router)
 
 # -------------------------------
 # CORS
