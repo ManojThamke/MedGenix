@@ -96,12 +96,28 @@ export const voicePredict = async (formData) => {
 // -------------------------------
 
 /**
+ * Fetch a plain-English AI explanation of the prediction
+ * @param {Object} data - Contains result, confidence, risk, and features array
+ */
+export const explainPrediction = async (data) => {
+  try {
+    const response = await API.post("/explain", data);
+    return response.data;
+  } catch (error) {
+    console.error("Explain API Error:", error.response?.data || error.message);
+    // Safe fallback so the UI doesn't break
+    return { explanation: "Analysis complete. Awaiting clinical review." };
+  }
+};
+
+/**
  * AI Chat with Gemini
  * @param {string} prompt - User message
+ * @param {string} language - Target language (e.g., "English", "Spanish", "Hindi")
  */
-export const chat = async (prompt) => {
+export const chat = async (prompt, language = "English") => {
   try {
-    const response = await API.post("/chat", { prompt });
+    const response = await API.post("/chat", { prompt, language });
     return response.data;
   } catch (error) {
     console.error("Chat API Error:", error.response?.data || error.message);
@@ -124,7 +140,7 @@ export const generateReport = async (data) => {
 };
 
 // -------------------------------
-// DASHBOARD STATS & HISTORY (🔥 NEW FIX)
+// DASHBOARD STATS & HISTORY
 // -------------------------------
 
 /**

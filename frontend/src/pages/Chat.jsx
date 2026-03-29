@@ -10,7 +10,10 @@ export default function Chat() {
   // 1. Extract Report Context passed from Dashboard/Reports
   const reportContext = location.state?.reportContext || null;
 
-  // 2. Auto-Generate Doctor's Initial Assessment based on Data
+  // 2. Language State (Defaults to English)
+  const [language, setLanguage] = useState('English');
+
+  // 3. Auto-Generate Doctor's Initial Assessment based on Data
   const getInitialGreeting = () => {
     if (reportContext) {
       const isDetected = reportContext.result?.toLowerCase().includes('detected') || reportContext.risk === 'HIGH';
@@ -64,8 +67,8 @@ export default function Chat() {
     }
 
     try {
-      // 3. Call Backend API
-      const response = await chat(promptToSend);
+      // 3. Call Backend API with the prompt AND the selected language
+      const response = await chat(promptToSend, language);
       
       const newAiMsg = {
         id: Date.now() + 1,
@@ -121,6 +124,20 @@ export default function Chat() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          
+          {/* LANGUAGE SELECTOR */}
+          <select 
+            value={language} 
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-[#111827] border border-white/10 text-[12px] text-[#a78bfa] rounded-lg px-3 py-1.5 outline-none focus:border-[#7c5cfc]/50 cursor-pointer shadow-sm transition-all"
+          >
+            <option value="English">🇬🇧 English</option>
+            <option value="Spanish">🇪🇸 Spanish</option>
+            <option value="French">🇫🇷 French</option>
+            <option value="Hindi">🇮🇳 Hindi</option>
+            <option value="Marathi">🇮🇳 Marathi</option>
+          </select>
+
           <div className="hidden md:flex items-center gap-2 text-[12px] text-[#4ade80] font-mono tracking-wide bg-[#4ade80]/10 px-3 py-1.5 rounded-full border border-[#4ade80]/20">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_6px_#4ade80] animate-pulse"></span>
             Dr. AI Online

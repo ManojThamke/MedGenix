@@ -96,7 +96,8 @@ def run_prediction(features):
         "success": True,
         "result": result,
         "confidence": confidence,
-        "risk": risk
+        "risk": risk,
+        "features": features # 🔥 CRITICAL ADDITION: Send features back for Gemini to use!
     }
 
 # -------------------------------

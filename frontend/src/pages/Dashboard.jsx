@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import { jwtDecode } from "jwt-decode";
 import ClinicalReportPDF from '../components/ClinicalReportPDF';
-// IMPORT YOUR API FUNCTIONS (Added getStats)
-import { predict, voicePredict, generateReport, getStats } from '../services/api';
+// IMPORT YOUR API FUNCTIONS
+import { predict, voicePredict, generateReport, getStats, explainPrediction } from '../services/api';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Dashboard() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/login'); // Force login if no token
+            navigate('/login'); 
         } else {
             try {
                 const decoded = jwtDecode(token);
@@ -33,7 +33,7 @@ export default function Dashboard() {
         }
     }, [navigate]);
 
-    // --- Dynamic KPI State (NEW) ---
+    // --- Dynamic KPI State ---
     const [kpiStats, setKpiStats] = useState({
         total_predictions: 0,
         accuracy: 95.2, // Baseline ML model accuracy
@@ -41,7 +41,7 @@ export default function Dashboard() {
         reports_generated: 0
     });
 
-    // Fetch Live Stats from MongoDB on Load (NEW)
+    // Fetch Live Stats from MongoDB on Load
     useEffect(() => {
         const fetchDashboardStats = async () => {
             const stats = await getStats();
@@ -56,6 +56,7 @@ export default function Dashboard() {
     const [mode, setMode] = useState('manual');
     const [status, setStatus] = useState('idle');
     const [resultData, setResultData] = useState(null);
+    const [isExplaining, setIsExplaining] = useState(false); // Track Gemini Explanation Status
 
     // Form State
     const [formData, setFormData] = useState(Array(22).fill(''));
@@ -83,6 +84,7 @@ export default function Dashboard() {
         setFormData(Array(22).fill(''));
         setRecTime(0);
         setAudioBlob(null);
+        setIsExplaining(false);
     };
 
     const handleLogout = () => {
@@ -91,10 +93,11 @@ export default function Dashboard() {
     };
 
     // --------------------------------------------------------
-    // 1. MANUAL PREDICTION HANDLER
+    // 1. MANUAL PREDICTION HANDLER (WITH AUTO-EXPLAIN)
     // --------------------------------------------------------
     const runAnalysis = async () => {
         setStatus('analyzing');
+        setIsExplaining(true);
 
         try {
             const featuresArray = formData.map(val => parseFloat(val) || 0);
@@ -103,20 +106,38 @@ export default function Dashboard() {
             if (response.error || !response.success) {
                 alert("Prediction failed: " + (response.error || "Unknown error"));
                 setStatus('idle');
+                setIsExplaining(false);
                 return;
             }
 
-            setResultData({
+            const predData = {
                 result: response.result || 'detected',
                 confidence: response.confidence || 99,
                 risk: response.risk || 'HIGH'
+            };
+
+            // 1. Show the ML Results immediately
+            setResultData(predData);
+            setStatus('complete');
+
+            // 2. Secretly fetch the Gemini explanation in the background
+            const explainRes = await explainPrediction({
+                ...predData,
+                features: featuresArray
             });
 
-            setStatus('complete');
+            // 3. Update the state with the new Gemini text
+            setResultData(prev => ({
+                ...prev,
+                ai_summary: explainRes.explanation
+            }));
+
         } catch (error) {
             console.error("Manual analysis error:", error);
             alert("Failed to connect to backend.");
             setStatus('idle');
+        } finally {
+            setIsExplaining(false);
         }
     };
 
@@ -125,22 +146,17 @@ export default function Dashboard() {
     // --------------------------------------------------------
     const toggleRecording = async () => {
         if (isRecording) {
-            // STOP RECORDING
             if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
                 mediaRecorderRef.current.stop();
             }
             setIsRecording(false);
         } else {
-            // START RECORDING
             try {
                 setRecTime(0);
                 setAudioBlob(null);
                 audioChunksRef.current = [];
 
-                // Request Microphone Access
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                // Initialize Recorder
                 const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
                 recorder.ondataavailable = (event) => {
@@ -167,7 +183,7 @@ export default function Dashboard() {
     };
 
     // --------------------------------------------------------
-    // 3. VOICE PREDICTION HANDLER (API)
+    // 3. VOICE PREDICTION HANDLER (WITH AUTO-EXPLAIN & PDF FIX)
     // --------------------------------------------------------
     const runVoiceAnalysis = async () => {
         if (!audioBlob) {
@@ -176,6 +192,7 @@ export default function Dashboard() {
         }
 
         setStatus('analyzing');
+        setIsExplaining(true);
 
         try {
             const formDataToSend = new FormData();
@@ -186,27 +203,51 @@ export default function Dashboard() {
             if (response.error || !response.success) {
                 alert("Voice analysis failed: " + (response.error || "Unknown error"));
                 setStatus('idle');
+                setIsExplaining(false);
                 return;
             }
 
-            setResultData({
+            // 🔥 CRITICAL FIX: Aggressively parse features whether backend sent an Array or a Dictionary
+            let featuresArray = Array(22).fill(0);
+            if (response.features) {
+                const rawFeatures = Array.isArray(response.features) 
+                    ? response.features 
+                    : Object.values(response.features);
+                
+                if (rawFeatures.length > 0) {
+                    featuresArray = rawFeatures.map(val => Number(val).toFixed(5));
+                    setFormData(featuresArray); // Force form to update for the PDF
+                }
+            }
+
+            const predData = {
                 result: response.result || 'detected',
                 confidence: response.confidence || 95,
                 risk: response.risk || 'HIGH'
+            };
+
+            // 1. Show the ML Results immediately
+            setResultData(predData);
+            setStatus('complete');
+
+            // 2. Fetch the Gemini explanation in the background
+            const explainRes = await explainPrediction({
+                ...predData,
+                features: featuresArray
             });
 
-            // 🔥 CRITICAL FIX: Populate form with extracted voice features so the PDF prints numbers, not 0.00
-            if (response.features && Array.isArray(response.features)) {
-                // Round numbers for cleaner PDF display
-                const extractedNumbers = response.features.map(val => Number(val).toFixed(5));
-                setFormData(extractedNumbers);
-            }
+            // 3. Update the state with the new Gemini text
+            setResultData(prev => ({
+                ...prev,
+                ai_summary: explainRes.explanation
+            }));
 
-            setStatus('complete');
         } catch (error) {
             console.error("Voice analysis error:", error);
             alert("Failed to connect to backend.");
             setStatus('idle');
+        } finally {
+            setIsExplaining(false);
         }
     };
 
@@ -217,7 +258,7 @@ export default function Dashboard() {
         // 1. Silent Backend Call to save to MongoDB
         const reportPayload = resultData ? {
             ...resultData,
-            method: mode // Track if voice or manual
+            method: mode
         } : {
             result: "Parkinson's Detected",
             confidence: 99,
@@ -227,35 +268,20 @@ export default function Dashboard() {
         generateReport(reportPayload).catch(e => console.log("DB Save Warning:", e));
 
         const element = document.getElementById('pdf-report-template');
-
-        // 2. Force state for capture
         element.style.display = 'block';
 
         const opt = {
             margin: 0,
             filename: `MedGenix_Report_${Date.now()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                scrollY: 0,
-                windowWidth: 794
-            },
-            jsPDF: {
-                unit: 'px',
-                format: [794, 1122],
-                orientation: 'portrait',
-                hotfixes: ['px_scaling']
-            }
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, windowWidth: 794 },
+            jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait', hotfixes: ['px_scaling'] },
+            pagebreak: { mode: 'css', avoid: 'tr' } // Respect CSS page breaks
         };
 
-        // 3. Wait for browser render
         setTimeout(() => {
             html2pdf().from(element).set(opt).save().then(() => {
                 element.style.display = 'none';
-
-                // Refresh stats after saving a report
                 getStats().then(stats => {
                     if (stats) setKpiStats(stats);
                 });
@@ -329,7 +355,7 @@ export default function Dashboard() {
 
             <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-1 pb-10">
 
-                {/* 2. KPI STATS ROW (NOW DYNAMIC) */}
+                {/* 2. KPI STATS ROW */}
                 <div className="grid grid-cols-4 gap-4 px-8 pt-8">
                     <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm">
                         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7a99] mb-2">Total Predictions</div>
@@ -367,11 +393,6 @@ export default function Dashboard() {
                             <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80]"></span>
                             <span className="text-[#4ade80] font-mono font-bold tracking-wide">HEALTHY</span>
                             <span className="text-[#6b7a99]">72% · LOW · 1h ago</span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-[#111827] border border-[#f87171]/20 rounded-lg px-3 py-1.5 text-[11px] hover:border-[#f87171]/40 transition-colors cursor-pointer">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#f87171]"></span>
-                            <span className="text-[#f87171] font-mono font-bold tracking-wide">DETECTED</span>
-                            <span className="text-[#6b7a99]">87% · MOD · 3h ago</span>
                         </div>
                     </div>
                     <button className="text-[12px] font-semibold px-4 py-2 rounded-lg bg-[#111827] border border-white/5 text-[#a78bfa] hover:bg-[#1a2035] hover:border-[#a78bfa]/30 transition-all shrink-0" onClick={() => navigate('/reports')}>View History →</button>
@@ -436,7 +457,6 @@ export default function Dashboard() {
                                 </div>
 
                                 <div className="flex flex-col items-center justify-center flex-1 py-4 px-6 text-center bg-[#060810] border border-white/5 rounded-2xl">
-                                    {/* Glowing Recording Button */}
                                     <div className="relative w-[140px] h-[140px] mb-8 cursor-pointer group" onClick={toggleRecording}>
                                         <div className={`absolute inset-0 rounded-full transition-all duration-500 ${isRecording ? 'bg-[#f87171]/20 blur-xl animate-pulse' : 'bg-[#22d3ee]/10 blur-xl group-hover:bg-[#22d3ee]/20'}`}></div>
                                         <div className={`relative w-[140px] h-[140px] rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 bg-[#0c0f1a] ${isRecording ? 'border-[#f87171] shadow-[0_0_30px_rgba(248,113,113,0.3)]' : 'border-[#22d3ee]/40 group-hover:border-[#22d3ee]/80'}`}>
@@ -451,7 +471,6 @@ export default function Dashboard() {
                                         {isRecording ? 'Maintain a clear, sustained "ahhh" tone into your microphone.' : (!isRecording && audioBlob ? 'Acoustic data captured. Proceed to run the ML analysis.' : 'Speak clearly for 5–10 seconds. Maintain a sustained "ahhh" tone for optimal feature extraction.')}
                                     </div>
 
-                                    {/* Animated Waveform */}
                                     <div className="flex items-center justify-center gap-1 h-12 my-8 w-full">
                                         {[12, 24, 34, 46, 32, 40, 22, 14, 28, 16].map((height, i) => (
                                             <div key={i} className={`w-1 rounded-full bg-[#22d3ee] opacity-30 transition-all duration-300 ${isRecording ? 'opacity-100 animate-[wave_0.8s_ease_infinite]' : ''}`} style={{ height: `${height}px`, animationDelay: `${i * 0.08}s` }}></div>
@@ -477,7 +496,6 @@ export default function Dashboard() {
                     {/* RIGHT: RESULTS PANEL */}
                     <div className="flex flex-col gap-4 h-full">
 
-                        {/* Idle State */}
                         {status === 'idle' && (
                             <div className="flex-1 bg-[#0c0f1a] border border-white/5 rounded-[20px] p-10 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_0,transparent_60%)] pointer-events-none"></div>
@@ -492,10 +510,8 @@ export default function Dashboard() {
                             </div>
                         )}
 
-                        {/* Analyzing / Complete State */}
                         {(status === 'analyzing' || status === 'complete') && (
                             <>
-                                {/* Prediction Result Card */}
                                 <div className={`bg-[#0c0f1a] border border-white/5 rounded-[20px] p-7 shadow-lg relative overflow-hidden ${status === 'analyzing' ? 'opacity-60 blur-[2px] scale-[0.98] transition-all duration-500' : 'opacity-100 blur-0 scale-100 transition-all duration-500'}`}>
                                     <div className={`absolute top-0 left-0 right-0 h-1 ${resultData?.result === 'Healthy' ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-gradient-to-r from-[#f87171] via-[#fbbf24] to-[#f87171]'}`}></div>
 
@@ -513,7 +529,6 @@ export default function Dashboard() {
 
                                     <div className="flex items-center gap-6 mb-6 p-4 bg-[#060810] rounded-xl border border-white/5">
                                         <div className="relative w-[80px] h-[80px] shrink-0">
-                                            {/* Circular Progress Bar */}
                                             <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90 drop-shadow-[0_0_8px_rgba(248,113,113,0.3)]">
                                                 <circle cx="40" cy="40" r="34" fill="none" stroke="#111827" strokeWidth="8" />
                                                 <circle cx="40" cy="40" r="34" fill="none" stroke={resultData?.result === 'Healthy' ? '#4ade80' : '#f87171'} strokeWidth="8" strokeLinecap="round" strokeDasharray="213.6" strokeDashoffset={status === 'complete' ? (213.6 - (213.6 * (resultData?.confidence || 0)) / 100) : "213.6"} className="transition-all duration-1000 ease-out" />
@@ -542,7 +557,6 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                {/* GenAI Insight Card */}
                                 <div className={`bg-[#0c0f1a] border border-white/5 rounded-[20px] p-7 shadow-lg relative overflow-hidden flex-1 flex flex-col ${status === 'analyzing' ? 'hidden' : 'block animate-[fi_0.6s_ease_out]'}`}>
                                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#7c5cfc] via-[#f472b6] to-[#7c5cfc]"></div>
 
@@ -557,10 +571,14 @@ export default function Dashboard() {
                                     </div>
 
                                     <div className="text-[13px] text-[#8b9bb4] leading-[1.65] mb-5 pb-5 border-b border-white/5">
-                                        {resultData?.result === 'Healthy'
-                                            ? "Voice biomarker analysis reveals stable fundamental frequencies and normal amplitude variations consistent with healthy laryngeal muscle control. No significant indicators of neuromuscular degeneration were identified."
-                                            : "Voice biomarker analysis reveals significant irregularities in fundamental frequency consistent with Parkinsonian speech. Elevated jitter and shimmer values indicate reduced vocal stability — a hallmark of early neuromuscular degeneration affecting the laryngeal muscles."
-                                        }
+                                        {isExplaining ? (
+                                            <div className="bg-[#111827] p-4 rounded-xl border border-[#a78bfa]/20 shadow-inner flex items-center gap-3">
+                                                <span className="w-4 h-4 border-2 border-[#a78bfa] border-t-transparent rounded-full animate-spin"></span>
+                                                <span className="text-[13px] text-[#a78bfa] animate-pulse font-mono">Gemini is synthesizing clinical data...</span>
+                                            </div>
+                                        ) : (
+                                            <p dangerouslySetInnerHTML={{ __html: resultData?.ai_summary?.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>') || "Analysis complete. Awaiting clinical review." }} className="bg-[#111827] p-4 rounded-xl border border-[#a78bfa]/20 shadow-inner" />
+                                        )}
                                     </div>
 
                                     <div className="flex flex-col gap-3 flex-1">
@@ -578,7 +596,6 @@ export default function Dashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Context-Aware Routing Button */}
                                     <div className="mt-5">
                                         <button
                                             onClick={() => navigate('/chat', { state: { reportContext: resultData } })}
@@ -599,7 +616,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Hidden Component for PDF Generation - Force Remount on State Change */}
+            {/* Hidden Component for PDF Generation */}
             {status === 'complete' && (
                 <div key={Date.now()}>
                     <ClinicalReportPDF 
