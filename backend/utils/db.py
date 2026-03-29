@@ -21,9 +21,11 @@ try:
 
     db = client["medgenix"]
     reports_collection = db["reports"]
+    users_collection = db["users"]
 
 except Exception as e:
     print("❌ MongoDB Connection Error:", e)
 
     # Fallback (so app doesn't crash)
     reports_collection = None
+    users_collection = None

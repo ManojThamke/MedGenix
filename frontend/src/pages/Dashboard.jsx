@@ -1,12 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
+import { jwtDecode } from "jwt-decode";
 import ClinicalReportPDF from '../components/ClinicalReportPDF';
-// IMPORT YOUR API FUNCTIONS
-import { predict, voicePredict, generateReport } from '../services/api';
+// IMPORT YOUR API FUNCTIONS (Added getStats)
+import { predict, voicePredict, generateReport, getStats } from '../services/api';
 
 export default function Dashboard() {
     const navigate = useNavigate();
+
+    // --- User Authentication State ---
+    const [userEmail, setUserEmail] = useState('user@medgenix.ai');
+    const [userInitial, setUserInitial] = useState('U');
+
+    // Verify Auth on Load & Extract Email
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login'); // Force login if no token
+        } else {
+            try {
+                const decoded = jwtDecode(token);
+                if (decoded.sub) {
+                    setUserEmail(decoded.sub);
+                    setUserInitial(decoded.sub.charAt(0).toUpperCase());
+                }
+            } catch (e) {
+                console.error("Invalid token format");
+                localStorage.removeItem('token');
+                navigate('/login');
+            }
+        }
+    }, [navigate]);
+
+    // --- Dynamic KPI State (NEW) ---
+    const [kpiStats, setKpiStats] = useState({
+        total_predictions: 0,
+        accuracy: 95.2, // Baseline ML model accuracy
+        high_risk: 0,
+        reports_generated: 0
+    });
+
+    // Fetch Live Stats from MongoDB on Load (NEW)
+    useEffect(() => {
+        const fetchDashboardStats = async () => {
+            const stats = await getStats();
+            if (stats) {
+                setKpiStats(stats);
+            }
+        };
+        fetchDashboardStats();
+    }, []);
 
     // UI State Management
     const [mode, setMode] = useState('manual');
@@ -17,12 +61,12 @@ export default function Dashboard() {
     const [formData, setFormData] = useState(Array(22).fill(''));
     const demoData = [119.992, 157.302, 74.997, 0.00784, 0.00007, 0.0037, 0.00554, 0.01109, 0.04374, 0.42600, 0.02182, 0.03130, 0.02971, 0.06545, 0.02211, 21.033, 0.414783, 0.815285, -4.813031, 0.266482, 2.301442, 0.284654];
 
-    // Voice Recording State (NEW)
+    // Voice Recording State
     const [isRecording, setIsRecording] = useState(false);
     const [recTime, setRecTime] = useState(0);
-    const [audioBlob, setAudioBlob] = useState(null); // Stores the real audio
-    const mediaRecorderRef = useRef(null); // Tracks the recorder instance
-    const audioChunksRef = useRef([]); // Temporarily holds audio packets
+    const [audioBlob, setAudioBlob] = useState(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
 
     // Handlers
     const loadDemo = () => setFormData(demoData);
@@ -39,6 +83,11 @@ export default function Dashboard() {
         setFormData(Array(22).fill(''));
         setRecTime(0);
         setAudioBlob(null);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     // --------------------------------------------------------
@@ -91,7 +140,7 @@ export default function Dashboard() {
                 // Request Microphone Access
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                // Initialize Recorder (WebM format is standard for browsers)
+                // Initialize Recorder
                 const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
                 recorder.ondataavailable = (event) => {
@@ -101,11 +150,8 @@ export default function Dashboard() {
                 };
 
                 recorder.onstop = () => {
-                    // Compile chunks into a single Blob
                     const finalBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                     setAudioBlob(finalBlob);
-
-                    // Stop hardware mic usage
                     stream.getTracks().forEach(track => track.stop());
                 };
 
@@ -133,7 +179,6 @@ export default function Dashboard() {
 
         try {
             const formDataToSend = new FormData();
-            // Send the REAL recorded blob to the backend
             formDataToSend.append("file", audioBlob, "voice_recording.webm");
 
             const response = await voicePredict(formDataToSend);
@@ -150,6 +195,13 @@ export default function Dashboard() {
                 risk: response.risk || 'HIGH'
             });
 
+            // 🔥 CRITICAL FIX: Populate form with extracted voice features so the PDF prints numbers, not 0.00
+            if (response.features && Array.isArray(response.features)) {
+                // Round numbers for cleaner PDF display
+                const extractedNumbers = response.features.map(val => Number(val).toFixed(5));
+                setFormData(extractedNumbers);
+            }
+
             setStatus('complete');
         } catch (error) {
             console.error("Voice analysis error:", error);
@@ -162,9 +214,21 @@ export default function Dashboard() {
     // 4. FIXED HYBRID PDF DOWNLOAD HANDLER
     // --------------------------------------------------------
     const handleDownloadPDF = async () => {
+        // 1. Silent Backend Call to save to MongoDB
+        const reportPayload = resultData ? {
+            ...resultData,
+            method: mode // Track if voice or manual
+        } : {
+            result: "Parkinson's Detected",
+            confidence: 99,
+            risk: "HIGH",
+            method: "manual"
+        };
+        generateReport(reportPayload).catch(e => console.log("DB Save Warning:", e));
+
         const element = document.getElementById('pdf-report-template');
 
-        // 1. Force state for capture
+        // 2. Force state for capture
         element.style.display = 'block';
 
         const opt = {
@@ -175,24 +239,28 @@ export default function Dashboard() {
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                scrollY: 0, // Prevents offset issues
-                windowWidth: 794 // Locks canvas width
+                scrollY: 0,
+                windowWidth: 794
             },
             jsPDF: {
                 unit: 'px',
-                format: [794, 1122], // Absolute ISO A4
+                format: [794, 1122],
                 orientation: 'portrait',
                 hotfixes: ['px_scaling']
             }
         };
 
-        // 2. Wait for the browser to finish rendering the "Display: Block"
-        // This is the most common reason for 18-page bugs.
+        // 3. Wait for browser render
         setTimeout(() => {
             html2pdf().from(element).set(opt).save().then(() => {
                 element.style.display = 'none';
+
+                // Refresh stats after saving a report
+                getStats().then(stats => {
+                    if (stats) setKpiStats(stats);
+                });
             });
-        }, 500); // 500ms delay to ensure the layout is perfectly still
+        }, 500);
     };
 
     // Voice Timer Effect
@@ -201,7 +269,6 @@ export default function Dashboard() {
         if (isRecording) {
             interval = setInterval(() => {
                 setRecTime((prev) => {
-                    // Auto-stop at 10 seconds to match clinical standard
                     if (prev >= 9) {
                         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
                             mediaRecorderRef.current.stop();
@@ -244,35 +311,44 @@ export default function Dashboard() {
                     <button className="text-[13px] font-medium px-4 py-2 rounded-lg bg-[#111827] border border-white/5 text-[#6b7a99] hover:border-white/15 hover:text-white transition-all flex items-center gap-2" onClick={() => navigate('/chat')}>💬 AI Chat</button>
                     <button className="text-[13px] font-medium px-4 py-2 rounded-lg bg-[#111827] border border-white/5 text-[#6b7a99] hover:border-white/15 hover:text-white transition-all flex items-center gap-2" onClick={() => navigate('/reports')}>📋 Reports</button>
                     <div className="w-px h-5 bg-white/10 mx-2"></div>
-                    <div className="flex items-center gap-2.5 bg-[#111827] border border-white/5 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#1a2035] transition-colors">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c5cfc] to-[#f472b6] flex items-center justify-center text-[11px] font-bold text-white shadow-inner">D</div>
-                        <span className="text-[13px] font-semibold pr-1">demo@medgenix.ai</span>
+
+                    {/* USER PROFILE DROPDOWN */}
+                    <div className="relative group cursor-pointer">
+                        <div className="flex items-center gap-2.5 bg-[#111827] border border-white/5 rounded-lg px-3 py-1.5 hover:bg-[#1a2035] transition-colors">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c5cfc] to-[#f472b6] flex items-center justify-center text-[11px] font-bold text-white shadow-inner">{userInitial}</div>
+                            <span className="text-[13px] font-semibold pr-1 max-w-[120px] truncate">{userEmail}</span>
+                        </div>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-[#0c0f1a] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden z-50">
+                            <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-[13px] text-red-400 hover:bg-white/5 font-semibold transition-colors">
+                                Logout / Disconnect
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-1 pb-10">
 
-                {/* 2. KPI STATS ROW */}
+                {/* 2. KPI STATS ROW (NOW DYNAMIC) */}
                 <div className="grid grid-cols-4 gap-4 px-8 pt-8">
                     <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm">
                         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7a99] mb-2">Total Predictions</div>
-                        <div className="font-['Syne'] text-[26px] font-extrabold text-white mb-1">247</div>
+                        <div className="font-['Syne'] text-[26px] font-extrabold text-white mb-1">{kpiStats.total_predictions}</div>
                         <div className="text-[12px] text-[#6b7a99] font-medium">all time</div>
                     </div>
                     <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm">
                         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7a99] mb-2">Model Accuracy</div>
-                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#4ade80] mb-1">95.2%</div>
+                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#4ade80] mb-1">{kpiStats.accuracy}%</div>
                         <div className="text-[12px] text-[#6b7a99] font-medium">Random Forest ensemble</div>
                     </div>
                     <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm">
                         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7a99] mb-2">High Risk Cases</div>
-                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#f87171] mb-1">38</div>
+                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#f87171] mb-1">{kpiStats.high_risk}</div>
                         <div className="text-[12px] text-[#6b7a99] font-medium">this month</div>
                     </div>
                     <div className="bg-[#0c0f1a] border border-white/5 rounded-2xl p-5 shadow-sm">
                         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7a99] mb-2">Reports Generated</div>
-                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#a78bfa] mb-1">189</div>
+                        <div className="font-['Syne'] text-[26px] font-extrabold text-[#a78bfa] mb-1">{kpiStats.reports_generated}</div>
                         <div className="text-[12px] text-[#6b7a99] font-medium">PDFs downloaded</div>
                     </div>
                 </div>
@@ -502,7 +578,17 @@ export default function Dashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="mt-5 px-4 py-3 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-xl text-[11px] text-[#fbbf24]/80 font-mono flex items-start gap-2">
+                                    {/* Context-Aware Routing Button */}
+                                    <div className="mt-5">
+                                        <button
+                                            onClick={() => navigate('/chat', { state: { reportContext: resultData } })}
+                                            className="w-full py-3 rounded-xl bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#a78bfa] text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#7c5cfc]/20 hover:text-white transition-all shadow-sm"
+                                        >
+                                            💬 Ask AI about this report
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4 px-4 py-3 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-xl text-[11px] text-[#fbbf24]/80 font-mono flex items-start gap-2">
                                         <span className="text-[13px]">⚠</span>
                                         <span>AI-generated clinical insight for screening and informational purposes only. Not a substitute for professional medical diagnosis.</span>
                                     </div>
@@ -513,8 +599,16 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Hidden Component for PDF Generation */}
-            <ClinicalReportPDF data={resultData} formData={formData} />
+            {/* Hidden Component for PDF Generation - Force Remount on State Change */}
+            {status === 'complete' && (
+                <div key={Date.now()}>
+                    <ClinicalReportPDF 
+                        data={resultData} 
+                        formData={formData} 
+                        userEmail={userEmail} 
+                    />
+                </div>
+            )}
 
         </div>
     );
