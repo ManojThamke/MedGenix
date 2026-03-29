@@ -2,26 +2,22 @@
     "Random Forest": [
         {
             "data_percent": 40,
-            "accuracy": 0.7692
+            "accuracy": 0.7949
         },
         {
-            "data_percent": 50,
-            "accuracy": 0.8974
-        },
-        {
-            "data_percent": 60,
+            "data_percent": 52,
             "accuracy": 0.8718
         },
         {
-            "data_percent": 70,
+            "data_percent": 64,
             "accuracy": 0.9231
         },
         {
-            "data_percent": 80,
-            "accuracy": 0.9231
+            "data_percent": 76,
+            "accuracy": 0.8974
         },
         {
-            "data_percent": 90,
+            "data_percent": 88,
             "accuracy": 0.9231
         },
         {
@@ -35,28 +31,24 @@
             "accuracy": 0.8462
         },
         {
-            "data_percent": 50,
-            "accuracy": 0.8462
+            "data_percent": 52,
+            "accuracy": 0.8718
         },
         {
-            "data_percent": 60,
+            "data_percent": 64,
             "accuracy": 0.8974
         },
         {
-            "data_percent": 70,
+            "data_percent": 76,
             "accuracy": 0.8974
         },
         {
-            "data_percent": 80,
-            "accuracy": 0.8974
-        },
-        {
-            "data_percent": 90,
-            "accuracy": 0.9231
+            "data_percent": 88,
+            "accuracy": 0.9487
         },
         {
             "data_percent": 100,
-            "accuracy": 0.9231
+            "accuracy": 0.9487
         }
     ],
     "Logistic Regression": [
@@ -65,24 +57,20 @@
             "accuracy": 0.8205
         },
         {
-            "data_percent": 50,
-            "accuracy": 0.8462
+            "data_percent": 52,
+            "accuracy": 0.8974
         },
         {
-            "data_percent": 60,
-            "accuracy": 0.8718
-        },
-        {
-            "data_percent": 70,
+            "data_percent": 64,
             "accuracy": 0.9231
         },
         {
-            "data_percent": 80,
-            "accuracy": 0.8974
+            "data_percent": 76,
+            "accuracy": 0.9231
         },
         {
-            "data_percent": 90,
-            "accuracy": 0.8974
+            "data_percent": 88,
+            "accuracy": 0.9231
         },
         {
             "data_percent": 100,

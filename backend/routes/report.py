@@ -1,12 +1,11 @@
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
-import os
+from io import BytesIO
 
-# 🔥 MongoDB
 from utils.db import reports_collection
 
 router = APIRouter()
@@ -14,108 +13,76 @@ router = APIRouter()
 class ReportRequest(BaseModel):
     result: str
     confidence: float
+    risk: str = None
 
 
 @router.post("/report")
 def generate_report(data: ReportRequest):
+    try:
+        buffer = BytesIO()
 
-    # ---------------- FILE SETUP ----------------
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"MedGenix_Report_{timestamp}.pdf"
-    file_path = f"reports/{file_name}"
+        doc = SimpleDocTemplate(buffer)
+        styles = getSampleStyleSheet()
+        content = []
 
-    os.makedirs("reports", exist_ok=True)
+        # Risk logic
+        if data.risk:
+            risk = data.risk
+        else:
+            if data.confidence >= 80:
+                risk = "HIGH"
+            elif data.confidence >= 60:
+                risk = "MODERATE"
+            else:
+                risk = "LOW"
 
-    doc = SimpleDocTemplate(file_path)
-    styles = getSampleStyleSheet()
-    content = []
+        # Content
+        content.append(Paragraph("MedGenix AI Clinical Report", styles["Title"]))
+        content.append(Spacer(1, 15))
 
-    # ---------------- RISK LOGIC ----------------
-    if data.confidence >= 80:
-        risk = "HIGH"
-    elif data.confidence >= 60:
-        risk = "MODERATE"
-    else:
-        risk = "LOW"
+        content.append(Paragraph("Patient Details", styles["Heading2"]))
+        content.append(Paragraph(
+            f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            styles["Normal"]
+        ))
+        content.append(Spacer(1, 10))
 
-    # ---------------- TITLE ----------------
-    content.append(Paragraph("MedGenix AI Clinical Report", styles["Title"]))
-    content.append(Spacer(1, 15))
+        content.append(Paragraph("AI Prediction Summary", styles["Heading2"]))
+        content.append(Paragraph(f"Result: <b>{data.result}</b>", styles["Normal"]))
+        content.append(Paragraph(f"Confidence: {data.confidence}%", styles["Normal"]))
+        content.append(Paragraph(f"Risk Level: <b>{risk}</b>", styles["Normal"]))
+        content.append(Spacer(1, 15))
 
-    # ---------------- PATIENT ----------------
-    content.append(Paragraph("Patient Details", styles["Heading2"]))
-    content.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]))
-    content.append(Spacer(1, 10))
+        content.append(Paragraph("Model Analysis", styles["Heading2"]))
+        content.append(Paragraph(
+            "The prediction is based on voice biomarkers like pitch variation and instability.",
+            styles["Normal"]
+        ))
 
-    # ---------------- SUMMARY ----------------
-    content.append(Paragraph("AI Prediction Summary", styles["Heading2"]))
-    content.append(Paragraph(f"Result: <b>{data.result}</b>", styles["Normal"]))
-    content.append(Paragraph(f"Confidence: {data.confidence}%", styles["Normal"]))
-    content.append(Paragraph(f"Risk Level: <b>{risk}</b>", styles["Normal"]))
-    content.append(Spacer(1, 15))
+        # Build PDF
+        doc.build(content)
+        buffer.seek(0)
 
-    # ---------------- MODEL ANALYSIS ----------------
-    content.append(Paragraph("Model Analysis", styles["Heading2"]))
-    content.append(Paragraph(
-        "The prediction is based on patterns observed in voice biomarkers such as pitch variation, amplitude instability, and frequency irregularities.",
-        styles["Normal"]
-    ))
-    content.append(Spacer(1, 10))
+        # ✅ FIXED MongoDB check
+        if reports_collection is not None:
+            try:
+                reports_collection.insert_one({
+                    "result": data.result,
+                    "confidence": data.confidence,
+                    "risk": risk,
+                    "created_at": datetime.utcnow()
+                })
+            except Exception as db_error:
+                print("⚠ DB Insert Failed:", db_error)
 
-    # ---------------- FEATURES ----------------
-    content.append(Paragraph("Key Contributing Features", styles["Heading2"]))
-    content.append(Paragraph("• PPE → Indicates pitch instability", styles["Normal"]))
-    content.append(Paragraph("• spread1 → Reflects non-linear vocal variation", styles["Normal"]))
-    content.append(Paragraph("• MDVP:Fo → Represents frequency variation", styles["Normal"]))
-    content.append(Spacer(1, 10))
+        return StreamingResponse(
+            buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=MedGenix_Report.pdf"
+            }
+        )
 
-    # ---------------- ALERTS ----------------
-    content.append(Paragraph("Alerts", styles["Heading2"]))
-    content.append(Paragraph("⚠ Abnormal voice pattern detected", styles["Normal"]))
-    content.append(Paragraph("⚠ Pattern matches Parkinsonian speech characteristics", styles["Normal"]))
-    content.append(Spacer(1, 10))
-
-    # ---------------- AI INSIGHT (FUTURE READY) ----------------
-    content.append(Paragraph("AI Clinical Insight", styles["Heading2"]))
-    content.append(Paragraph(
-        "Based on analysis of voice biomarkers, the system detects irregularities commonly associated with Parkinsonian speech patterns. "
-        "These may indicate early-stage neuromuscular changes affecting vocal control.",
-        styles["Normal"]
-    ))
-    content.append(Spacer(1, 10))
-
-    # ---------------- RECOMMENDATION ----------------
-    content.append(Paragraph("Recommendation", styles["Heading2"]))
-    content.append(Paragraph("• Consult neurologist for professional evaluation", styles["Normal"]))
-    content.append(Paragraph("• Perform clinical tests (UPDRS, MRI if required)", styles["Normal"]))
-    content.append(Paragraph("• Monitor speech changes regularly", styles["Normal"]))
-    content.append(Spacer(1, 10))
-
-    # ---------------- DISCLAIMER ----------------
-    content.append(Paragraph("Disclaimer", styles["Heading2"]))
-    content.append(Paragraph(
-        "This report is generated using AI-based analysis and is intended for screening purposes only. "
-        "It should not replace professional medical diagnosis.",
-        styles["Italic"]
-    ))
-
-    # ---------------- BUILD PDF ----------------
-    doc.build(content)
-
-    # ---------------- SAVE TO MONGODB ----------------
-    report_data = {
-        "file_name": file_name,
-        "result": data.result,
-        "confidence": data.confidence,
-        "risk": risk,
-        "created_at": datetime.utcnow()
-    }
-
-    reports_collection.insert_one(report_data)
-
-    # ---------------- RETURN FILE ----------------
-    return FileResponse(
-        path=file_path,
-        filename=file_name,
-        media_type="application/pdf"
-    )
+    except Exception as e:
+        print("❌ REPORT ERROR:", e)
+        return {"error": str(e)}
