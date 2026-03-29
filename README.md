@@ -7,14 +7,27 @@ MedGenix is an AI-powered medical diagnostic system that detects Parkinson's dis
 **MedGenix** leverages machine learning to analyze voice biomarkers and detect early signs of Parkinson's disease. The system processes 22 voice features extracted from audio recordings and uses ensemble learning models to deliver predictions with high accuracy, including risk stratification.
 
 ### Key Features
-- ✅ **AI-Powered Detection** - Uses Random Forest, SVM, and Logistic Regression models
-- ✅ **Risk Stratification** - Classifies predictions into HIGH/MODERATE/LOW risk categories
-- ✅ **MongoDB Integration** - Stores all predictions and reports for medical record keeping
-- ✅ **Medical Chat Assistant** - Powered by Google Gemini for Parkinson's-specific medical guidance
-- ✅ **Enhanced PDF Reports** - Professional clinical reports with detailed analysis, insights, and recommendations
-- ✅ **Voice Feature Analysis** - Processes 22 distinct voice biomarkers
+- ✅ **AI-Powered Detection** - Ensemble of Random Forest, SVM, and Logistic Regression models for accurate predictions
+- ✅ **Voice Feature Analysis** - Analyzes 22 distinct voice biomarkers including:
+  - **MDVP Measurements**: Fundamental frequency (Fo) and variation (Fhi, Flo)
+  - **Jitter & Shimmer**: Voice perturbation indicators (absolute, relative, PPE)
+  - **Noise Ratios**: NHR, HNR - Voice quality metrics
+  - **Dysdiadochokinesia**: Speed of repetitive movements (spread1, spread2)
+  - **Phonatory Tremor**: DFA - Voice stability analysis
+- ✅ **Risk Stratification** - Automatic classification into HIGH (≥80%), MODERATE (60-79%), LOW (<60%) risk categories
+- ✅ **MongoDB Integration** - Persistent storage of all predictions and reports for medical record keeping
+- ✅ **Medical Chat Assistant** - Powered by Google Gemini for context-aware Parkinson's medical guidance
+- ✅ **Enhanced PDF Reports** - Professional clinical reports with:
+  - Patient details and timestamps
+  - AI prediction summary with risk level
+  - Model analysis and methodology
+  - Key contributing features identification
+  - Abnormal pattern alerts
+  - AI clinical insights and recommendations
+  - Medical disclaimer
 - ✅ **CORS-Enabled API** - Full frontend-backend integration with automatic file downloads
-- ✅ **React Frontend** - Modern UI with TailwindCSS
+- ✅ **React Frontend** - Modern responsive UI with TailwindCSS styling
+- ✅ **Data Persistence** - Automatic logging of all predictions with metadata and timestamps
 
 ---
 
@@ -161,7 +174,40 @@ MedGenix/
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
-- pip and npm
+- npm and pip
+- Git
+- MongoDB account (Cloud or Local)
+- Google Gemini API key
+
+### System Dependencies
+
+**Windows:**
+```bash
+# Install Python 3.8+
+# Download from https://www.python.org/downloads/
+
+# Install Node.js 16+
+# Download from https://nodejs.org/
+
+# Git
+# Download from https://git-scm.com/
+```
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install python@3.9
+brew install node
+brew install git
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt-get update
+sudo apt-get install python3 python3-pip
+sudo apt-get install nodejs npm
+sudo apt-get install git
+```
 
 ### 1. Backend Setup
 
@@ -171,19 +217,30 @@ cd backend
 
 # Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies using requirements.txt
+pip install -r requirements.txt
+
+# Or manually install (if requirements.txt not available)
 pip install fastapi uvicorn scikit-learn joblib numpy pydantic reportlab python-dotenv google-generativeai pymongo
 
 # Set up environment variables
-echo "GEMINI_API_KEY=your_api_key_here" > .env
+# Create .env file in backend directory with:
+# GEMINI_API_KEY=your_google_gemini_api_key
+# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/medgenix
 
 # Run the backend server
 uvicorn main:app --reload
 ```
 
 Backend runs on `http://localhost:8000`
+API documentation available at `http://localhost:8000/docs`
 
 ### 2. Frontend Setup
 
@@ -200,9 +257,101 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`
 
+### 3. MongoDB Setup
+
+**Option A: Cloud (MongoDB Atlas)**
+1. Go to [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a free account and cluster
+3. Create database user with username and password
+4. Add your IP address to whitelist
+5. Get connection string: `mongodb+srv://username:password@cluster.mongodb.net/`
+6. Add `medgenix` database name to connection string in `.env`
+
+**Option B: Local MongoDB**
+1. Install MongoDB from [mongodb.com/try/download/community](https://www.mongodb.com/try/download/community)
+2. Start MongoDB service
+3. Use connection string: `mongodb://localhost:27017/medgenix`
+
+### 4. Google Gemini API Setup
+
+1. Visit [Google AI Studio](https://ai.google.dev/tutorials/python_quickstart)
+2. Click "Get API Key" and create a new API key
+3. Add to `.env`: `GEMINI_API_KEY=your_api_key_here`
+
 ---
 
-## 📡 API Endpoints
+## 🎯 Detailed Features
+
+### 1. **Prediction Engine with Risk Assessment**
+- Analyzes 22 voice biomarkers extracted from speech
+- Returns 3 outputs: prediction result, confidence score, and risk level
+- Automatic risk classification based on confidence percentages
+- High accuracy ensemble model approach
+- Real-time predictions with instant results
+
+### 2. **MongoDB Data Persistence**
+- Every prediction is automatically saved to MongoDB
+- Tracks: prediction result, confidence, risk level, timestamp, filename
+- Enables patient history tracking and audit trails
+- Supports analytics and research queries
+- Secure medical record keeping infrastructure
+
+### 3. **Clinical Report Generation**
+- Generates professional PDF reports with timestamp
+- Includes comprehensive clinical analysis sections:
+  - Patient information and timestamp
+  - Prediction results with risk classification
+  - Detailed model methodology explanation
+  - Key contributing voice features analysis
+  - Clinical alerts for abnormal patterns
+  - AI-generated clinical insights
+  - Professional recommendations for follow-up
+  - Medical legal disclaimer
+- Automatic PDF download to user device
+- Reports auto-saved to MongoDB and local `reports/` folder
+
+### 4. **Medical Chat Assistant**
+- Powered by Google Gemini large language model
+- Context-aware responses about Parkinson's disease
+- Supports medical questions and patient education
+- Real-time response streaming
+- Trained to provide accurate medical information
+- Complements automated predictions with expert knowledge
+
+### 5. **Full-Stack Integration**
+- **Backend**: FastAPI with high-performance async support
+- **Frontend**: React 19 with modern component architecture
+- **Database**: MongoDB with cloud and local support
+- **ML Models**: Ensemble approach with model comparison metrics
+- **CORS**: Complete frontend-backend integration
+- **Scalability**: Designed for production deployment
+
+### 6. **Voice Feature Analysis Details**
+The 22 voice biomarkers analyzed:
+1. **MDVP:Fo(Hz)** - Average fundamental frequency
+2. **MDVP:Fhi(Hz)** - Maximum fundamental frequency
+3. **MDVP:Flo(Hz)** - Minimum fundamental frequency
+4. **MDVP:Jitter(%)** - Jitter percentage
+5. **MDVP:Jitter(Abs)** - Absolute jitter
+6. **MDVP:RAP** - Relative amplitude perturbation
+7. **MDVP:PPQ** - Pitch period perturbation quotient
+8. **Jitter:DDP** - Differential jitter
+9. **MDVP:Shimmer** - Shimmer percentage
+10. **MDVP:Shimmer(dB)** - Shimmer in decibels
+11. **Shimmer:APQ3** - 3-point amplitude perturbation quotient
+12. **Shimmer:APQ5** - 5-point amplitude perturbation quotient
+13. **MDVP:APQ** - Amplitude perturbation quotient
+14. **Shimmer:DDA** - Differential shimmer
+15. **NHR** - Noise-to-harmonics ratio
+16. **HNR** - Harmonics-to-noise ratio
+17. **RPDE** - Recurrence period density entropy
+18. **DFA** - Detrended fluctuation analysis
+19. **spread1** - Phonatory tremor
+20. **spread2** - Phonatory tremor variation
+21. **PPE** - Pitch period entropy
+22. **status** - Target variable (Parkinson's disease status)
+
+---
 
 All endpoints are CORS-enabled for frontend integration.
 
@@ -306,9 +455,140 @@ Each prediction and generated report is automatically logged for:
 - Analytics and research
 - Patient history tracking
 
+### Error Responses
+
+All API endpoints return appropriate HTTP status codes:
+
+```json
+{
+  "error": "Error message",
+  "detail": "Detailed error description"
+}
+```
+
+**Common HTTP Status Codes:**
+- `200 OK` - Request successful
+- `400 Bad Request` - Invalid input (e.g., incorrect number of features)
+- `422 Unprocessable Entity` - Validation error
+- `500 Internal Server Error` - Server error or database connection issue
+
+**Example Error Response:**
+```json
+{
+  "detail": "Expected 22 features, but received 20"
+}
+```
+
 ---
 
-## 📊 Model Performance
+## 📋 API Reference Summary
+
+| Endpoint | Method | Purpose | Input | Output |
+|----------|--------|---------|-------|--------|
+| `/` | GET | Health check | - | `{message: "Running"}` |
+| `/predict` | POST | Parkinson's prediction | 22 voice features | `{result, confidence, risk}` |
+| `/chat` | POST | Medical assistance | Medical prompt | AI response text |
+| `/report` | POST | PDF report generation | Prediction data | Binary PDF file |
+| `/docs` | GET | API documentation | - | Interactive Swagger UI |
+
+### Prediction Response Codes
+```
+Confidence >= 80%  → Risk: HIGH     (Likely Parkinson's)
+Confidence 60-79%  → Risk: MODERATE (Possible symptoms)
+Confidence < 60%   → Risk: LOW      (Unlikely Parkinson's)
+```
+
+---
+
+## 🐳 Docker Deployment (Optional)
+
+**Backend Dockerfile** (create `backend/Dockerfile`):
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Frontend Dockerfile** (create `frontend/Dockerfile`):
+```dockerfile
+FROM node:16-alpine
+WORKDIR /app
+COPY package*.json .
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 5173
+CMD ["npm", "run", "dev"]
+```
+
+**Docker Compose** (create `docker-compose.yml` in root):
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MONGO_URI=${MONGO_URI}
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+
+  mongodb:
+    image: mongo:5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
+```
+
+**Run with Docker:**
+```bash
+# Set environment variables
+export GEMINI_API_KEY=your_key
+export MONGO_URI=mongodb://mongodb:27017/medgenix
+
+# Build and run
+docker-compose up
+```
+
+---
+
+## 📈 Performance Optimization Tips
+
+### Backend Optimization
+- Use `uvicorn` with multiple workers: `uvicorn main:app --workers 4`
+- Enable `--host 0.0.0.0` for network access
+- Use connection pooling for MongoDB
+- Cache model predictions for identical inputs
+- Implement rate limiting for API endpoints
+
+### Frontend Optimization
+- Build for production: `npm run build`
+- Use code splitting for large components
+- Lazy load components as needed
+- Optimize images and assets
+- Enable gzip compression
+
+### Database Optimization
+- Index frequently queried fields in MongoDB
+- Archive old reports periodically
+- Monitor database size and growth
+- Use aggregation pipelines for complex queries
+
+---
 
 Trained models comparison:
 - **Random Forest**: High accuracy with feature importance insights
@@ -319,7 +599,111 @@ All metrics available in `ml_engine/model_results.json`
 
 ---
 
-## 🔧 Development Notes
+## ⚙️ Environment Configuration
+
+### Backend `.env` File Setup
+
+Create a `.env` file in the `backend/` directory with:
+
+```
+# Google Gemini AI Configuration
+GEMINI_API_KEY=your_actual_api_key_from_google_ai_studio
+
+# MongoDB Configuration
+# For MongoDB Atlas (Cloud):
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/medgenix?retryWrites=true&w=majority
+
+# Or for local MongoDB:
+# MONGO_URI=mongodb://localhost:27017/medgenix
+
+# Optional: Debug mode
+DEBUG=false
+```
+
+### Environment Variable Details
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GEMINI_API_KEY` | Google Generative AI API key from AI Studio | `AIzaSy...` |
+| `MONGO_URI` | MongoDB connection string with database name | `mongodb+srv://user:pass@cluster.mongodb.net/medgenix` |
+| `DEBUG` | Enable debug logging (optional) | `true` or `false` |
+
+### Getting Required API Keys
+
+**Google Gemini API Key:**
+1. Visit [ai.google.dev](https://ai.google.dev)
+2. Click "Get API Key" in the top right
+3. Select "Create API key in new project"
+4. Copy the API key provided
+5. Add to `.env` as `GEMINI_API_KEY`
+
+**MongoDB Connection String:**
+1. Create account at [mongodb.com](https://www.mongodb.com)
+2. Create a cluster in MongoDB Atlas
+3. Click "Connect" → "Drivers"
+4. Copy connection string (Username and password will be added automatically if using managed credentials)
+5. Add database name: `/medgenix` before query parameters
+6. Add to `.env` as `MONGO_URI`
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+
+**Port 8000 already in use:**
+```bash
+# Use a different port
+uvicorn main:app --reload --port 8001
+```
+
+**MongoDB connection failed:**
+- Verify `MONGO_URI` is correct in `.env`
+- Check MongoDB server is running (for local)
+- Verify database credentials (for cloud)
+- Check IP whitelist in MongoDB Atlas (for cloud)
+
+**Gemini API error:**
+- Verify `GEMINI_API_KEY` is correct
+- Check quota and billing in Google AI Studio
+- Ensure API is enabled in Google Cloud Console
+
+### Frontend Issues
+
+**Port 5173 already in use:**
+```bash
+cd frontend
+npm run dev -- --port 5174
+```
+
+**Module not found errors:**
+```bash
+cd frontend
+rm -rf node_modules
+npm install
+```
+
+**CORS errors:**
+- Ensure backend is running on `http://localhost:8000`
+- Verify CORS is enabled in `backend/main.py`
+- Check frontend API base URL matches backend URL
+
+### General Issues
+
+**Python dependencies not installing:**
+```bash
+# Upgrade pip
+python -m pip install --upgrade pip
+# Retry installation
+pip install -r requirements.txt
+```
+
+**Models not loading:**
+- Ensure `backend/models/best_model.pkl` exists
+- Ensure `backend/models/scaler.pkl` exists
+- Check file permissions are readable
+
+---
 
 ### Environment Variables
 Create `.env` file in backend directory:
@@ -348,7 +732,135 @@ MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/
 
 ---
 
-## 🎯 Next Steps / Future Enhancements
+## ✅ Testing & Validation
+
+### Manual Testing
+
+**Test Prediction Endpoint:**
+```bash
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "features": [119.99, 157.302, 74.997, 0.00784, 0.00007, 0.00019, 0.00025, 0.00058, 0.021, 0.16, 0.00131, 0.00161, 0.00168, 0.00361, 0.036, 22.2, 0.00386, 0.653, 1.351, 0.02, 0.075, 0.3]
+  }'
+```
+
+**Test Chat Endpoint:**
+```bash
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "What are early symptoms of Parkinson disease?"}'
+```
+
+**Test Report Generation:**
+```bash
+curl -X POST "http://localhost:8000/report" \
+  -H "Content-Type: application/json" \
+  -d '{"result": "Parkinsons Detected", "confidence": 85.5}' \
+  --output report.pdf
+```
+
+### Automated Testing
+
+Create `backend/test_api.py`:
+```python
+import requests
+import json
+
+BASE_URL = "http://localhost:8000"
+
+# Test health check
+def test_health():
+    response = requests.get(f"{BASE_URL}/")
+    assert response.status_code == 200
+    print("✓ Health check passed")
+
+# Test prediction
+def test_prediction():
+    features = [119.99] * 22  # 22 dummy features
+    response = requests.post(
+        f"{BASE_URL}/predict",
+        json={"features": features}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "result" in data
+    assert "confidence" in data
+    assert "risk" in data
+    print("✓ Prediction test passed")
+
+# Run tests
+if __name__ == "__main__":
+    test_health()
+    test_prediction()
+    print("\nAll tests passed! 🎉")
+```
+
+**Run tests:**
+```bash
+cd backend
+python test_api.py
+```
+
+---
+
+## 🚢 Production Deployment
+
+### AWS Deployment
+
+1. **EC2 Setup:**
+   - Launch Ubuntu 22.04 instance
+   - Security group: Allow ports 22, 80, 443, 8000, 5173
+
+2. **Install Dependencies:**
+   ```bash
+   sudo apt update && sudo apt upgrade -y
+   sudo apt install python3-pip nodejs npm -y
+   ```
+
+3. **Deploy Backend:**
+   ```bash
+   cd /var/www/medgenix/backend
+   pip install -r requirements.txt
+   uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+
+4. **Deploy Frontend:**
+   ```bash
+   cd /var/www/medgenix/frontend
+   npm install && npm run build
+   ```
+
+### Google Cloud Deployment
+
+1. **Create Cloud Run Service:**
+   ```bash
+   gcloud run deploy medgenix-backend \
+     --source . \
+     --platform managed \
+     --region us-central1
+   ```
+
+2. **Set Environment Variables:**
+   ```bash
+   gcloud run services update medgenix-backend \
+     --set-env-vars GEMINI_API_KEY=your_key,MONGO_URI=your_uri
+   ```
+
+### Heroku Deployment
+
+1. **Create `Procfile` in backend:**
+   ```
+   web: uvicorn main:app --host 0.0.0.0 --port $PORT
+   ```
+
+2. **Deploy:**
+   ```bash
+   heroku create medgenix
+   git push heroku main
+   ```
+
+---
 
 - [ ] Implement user authentication & authorization
 - [ ] Add patient profile management with history
@@ -391,16 +903,65 @@ For issues, questions, or contributions, please reach out to the development tea
 
 ---
 
-**Last Updated**: March 29, 2026
+**Last Updated**: March 30, 2026
 
 ---
 
-## 🔄 Latest Updates
+## 🔄 Version History & Changelog
 
-### v1.1 - Database & Risk Assessment Integration
+### v1.1 - Database & Risk Assessment Integration (Current)
 - ✅ MongoDB integration for persistent storage
 - ✅ Risk stratification system (HIGH/MODERATE/LOW)
 - ✅ Enhanced PDF reports with clinical sections
 - ✅ Automatic report file downloads
 - ✅ Timestamped report naming convention
 - ✅ Database logging of all predictions and reports
+- ✅ Enhanced README with comprehensive setup and deployment guides
+
+### v1.0 - Initial Release
+- ✅ FastAPI backend with prediction endpoint
+- ✅ React frontend with TailwindCSS
+- ✅ ML models (Random Forest, SVM, Logistic Regression)
+- ✅ Medical chat assistant with Gemini AI
+- ✅ CORS-enabled API integration
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! To contribute:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+**Code Style:**
+- Backend: Follow PEP 8 Python style guide
+- Frontend: Use ESLint configuration
+- Commit messages: Clear and descriptive
+
+---
+
+## 📚 Documentation
+
+- **API Docs**: Available at `http://localhost:8000/docs` (when backend running)
+- **Dataset**: 40,566 Parkinson's voice samples with 22 biomarkers
+- **Models**: Pre-trained and serialized in `backend/models/`
+- **Feature**: Complete voice biomarker analysis
+
+---
+
+## 🐛 Reporting Issues
+
+Found a bug? Have a feature request?
+
+1. Check existing issues first
+2. Create a detailed issue with:
+   - Error message or unexpected behavior
+   - Steps to reproduce
+   - Expected vs actual results
+   - Your environment (OS, Python version, etc.)
+
+---

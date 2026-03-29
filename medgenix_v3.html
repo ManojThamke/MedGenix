@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedGenix — UI v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060810;--s1:#0c0f1a;--s2:#111827;--s3:#1a2035;--s4:#212940;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#f0f4ff;--muted:#6b7a99;--subtle:#2a3550;
+  --purple:#7c5cfc;--purple2:#a78bfa;--pink:#f472b6;
+  --cyan:#22d3ee;--green:#4ade80;--red:#f87171;--amber:#fbbf24;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:#030508;color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── DEMO NAV ── */
+.demo-nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(3,5,8,0.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.demo-nav-logo{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;margin-right:6px}
+.demo-nav-logo span{color:var(--purple2)}
+.pb{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  padding:5px 13px;border-radius:7px;
+  border:1px solid var(--border2);background:transparent;color:var(--muted);
+  cursor:pointer;transition:all .15s;
+}
+.pb:hover{background:var(--s2);color:var(--text)}
+.pb.act{background:rgba(124,92,252,0.18);border-color:rgba(124,92,252,0.55);color:var(--purple2)}
+
+.page{display:none;animation:fi .3s ease}
+.page.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════
+   PAGE 1 — HOME
+═══════════════════════════════════════ */
+.home-bg{min-height:100vh;background:var(--bg);position:relative;overflow:hidden}
+.home-bg::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(124,92,252,0.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,92,252,0.035) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;
+}
+.orb{position:absolute;pointer-events:none;border-radius:50%}
+.orb-a{width:600px;height:600px;top:-180px;left:-120px;background:radial-gradient(circle,rgba(124,92,252,0.2) 0%,transparent 68%)}
+.orb-b{width:500px;height:500px;top:160px;right:-120px;background:radial-gradient(circle,rgba(244,114,182,0.13) 0%,transparent 68%)}
+.orb-c{width:700px;height:350px;bottom:-60px;left:20%;background:radial-gradient(circle,rgba(34,211,238,0.06) 0%,transparent 68%)}
+
+/* home nav */
+.hnav{
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 48px;border-bottom:1px solid var(--border);
+}
+.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff}
+.logo em{color:var(--purple2);font-style:normal}
+.logo-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--purple);margin-left:2px;vertical-align:middle;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.hnav-links{display:flex;gap:28px}
+.hnav-links a{font-size:13px;color:var(--muted);text-decoration:none;transition:color .15s}
+.hnav-links a:hover{color:var(--text)}
+.btn-p{
+  font-size:13px;font-weight:600;padding:9px 22px;border-radius:10px;
+  background:var(--purple);color:#fff;border:none;cursor:pointer;
+  box-shadow:0 0 20px rgba(124,92,252,0.35);transition:all .2s;
+}
+.btn-p:hover{background:#8b6dfd;box-shadow:0 0 32px rgba(124,92,252,0.55);transform:translateY(-1px)}
+.btn-o{
+  font-size:13px;font-weight:500;padding:9px 22px;border-radius:10px;
+  background:transparent;color:var(--text);border:1px solid var(--border2);cursor:pointer;transition:all .15s;
+}
+.btn-o:hover{background:var(--s2);border-color:rgba(255,255,255,0.2)}
+
+/* hero */
+.hero{
+  position:relative;z-index:5;text-align:center;
+  padding:72px 48px 56px;max-width:920px;margin:0 auto;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(124,92,252,0.1);border:1px solid rgba(124,92,252,0.32);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;color:var(--purple2);margin-bottom:28px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.04em;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);animation:pulse 1.5s infinite}
+.hero h1{
+  font-family:'Syne',sans-serif;font-size:clamp(38px,6vw,74px);font-weight:800;
+  line-height:1.04;letter-spacing:-.03em;color:#fff;margin-bottom:8px;
+}
+.grad{background:linear-gradient(135deg,var(--purple2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:17px;color:var(--muted);line-height:1.68;max-width:560px;margin:18px auto 38px;font-weight:400}
+.hero-btns{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:44px}
+.trust-row{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* voice highlight strip */
+.voice-strip{
+  position:relative;z-index:5;max-width:900px;margin:0 auto 0;padding:0 48px 48px;
+}
+.voice-strip-inner{
+  background:linear-gradient(135deg,rgba(34,211,238,0.06),rgba(124,92,252,0.06));
+  border:1px solid rgba(34,211,238,0.2);border-radius:18px;
+  padding:24px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+}
+.voice-icon-big{
+  width:56px;height:56px;border-radius:14px;
+  background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);
+  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+}
+.voice-strip-text h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.voice-strip-text p{font-size:13px;color:var(--muted);line-height:1.6}
+.voice-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.vf-step{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);padding:3px 8px;border-radius:5px}
+.vf-arr{color:var(--subtle);font-size:12px}
+
+/* section */
+.sec{position:relative;z-index:5;padding:52px 48px;max-width:1100px;margin:0 auto}
+.sec-eye{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--purple2);margin-bottom:10px}
+.sec-title{font-family:'Syne',sans-serif;font-size:clamp(24px,4vw,38px);font-weight:800;letter-spacing:-.02em;color:#fff;margin-bottom:6px}
+.sec-sub{font-size:14px;color:var(--muted);margin-bottom:32px;max-width:500px;line-height:1.62}
+
+/* genai 3 cards */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.gc{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:22px;
+  transition:all .22s;position:relative;overflow:hidden;
+}
+.gc::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(124,92,252,.65),transparent);
+  opacity:0;transition:opacity .22s;
+}
+.gc:hover{border-color:rgba(124,92,252,.32);background:var(--s2)}
+.gc:hover::after{opacity:1}
+.gc-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.gc-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+.gc-desc{font-size:13px;color:var(--muted);line-height:1.62}
+.gc-tag{display:inline-block;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:5px;background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);color:var(--purple2)}
+
+/* features 6 */
+.f6{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fc{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.fic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ft{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.fd{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* how it works */
+.h3{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.hs{text-align:center;padding:24px 20px;position:relative}
+.hs:not(:last-child)::after{content:'→';position:absolute;right:-10px;top:34px;font-size:20px;color:var(--subtle)}
+.hn{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin:0 auto 12px;border:2px solid}
+.ht{font-size:14px;font-weight:700;color:#fff;margin-bottom:5px}
+.hd{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* CTA banner */
+.cta-banner{
+  position:relative;z-index:5;margin:0 48px 56px;
+  background:linear-gradient(135deg,rgba(124,92,252,.14),rgba(244,114,182,.08));
+  border:1px solid rgba(124,92,252,.28);border-radius:20px;padding:34px 38px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.cta-banner h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.cta-banner p{font-size:13px;color:var(--muted)}
+
+/* ═══════════════════════════════════════
+   PAGE 2 — LOGIN / REGISTER
+═══════════════════════════════════════ */
+.auth-bg{
+  min-height:100vh;background:var(--bg);
+  display:flex;align-items:stretch;
+  position:relative;overflow:hidden;
+}
+.auth-bg::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(124,92,252,.14) 0%,transparent 55%),
+             radial-gradient(ellipse at 80% 30%,rgba(244,114,182,.09) 0%,transparent 55%);
+}
+/* left panel */
+.auth-left{
+  position:relative;z-index:5;flex:1;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:60px 64px;max-width:520px;
+}
+.auth-logo-row{margin-bottom:48px}
+.auth-tagline{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.6;max-width:320px}
+.auth-feature-list{display:flex;flex-direction:column;gap:14px}
+.afl-item{display:flex;align-items:center;gap:12px}
+.afl-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.afl-text{font-size:13px;color:var(--muted);line-height:1.5}
+.afl-text strong{color:var(--text);font-weight:600;display:block;font-size:13px;margin-bottom:1px}
+/* divider */
+.auth-divider{width:1px;background:var(--border);position:relative;z-index:5;flex-shrink:0}
+/* right panel */
+.auth-right{
+  position:relative;z-index:5;flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:60px 48px;
+}
+.auth-card{
+  width:100%;max-width:400px;
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:22px;padding:34px;
+}
+.auth-card-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.auth-card-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.tab-row{display:flex;background:var(--s2);border-radius:10px;padding:3px;gap:3px;margin-bottom:24px}
+.atab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);border:none;background:transparent}
+.atab.act{background:var(--s3);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.fg{margin-bottom:14px}
+.fl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block;letter-spacing:.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.fi{
+  width:100%;padding:10px 13px;
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:9px;color:var(--text);font-size:14px;
+  font-family:'Space Grotesk',sans-serif;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.fi::placeholder{color:var(--subtle)}
+.fi:focus{border-color:rgba(124,92,252,.65);box-shadow:0 0 0 3px rgba(124,92,252,.1)}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:7px;padding:7px 11px;font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+.btn-auth{
+  width:100%;padding:12px;border-radius:10px;
+  background:var(--purple);color:#fff;font-size:14px;font-weight:700;
+  border:none;cursor:pointer;margin-top:4px;
+  box-shadow:0 0 22px rgba(124,92,252,.38);transition:all .2s;
+  font-family:'Space Grotesk',sans-serif;
+}
+.btn-auth:hover{background:#8b6dfd;box-shadow:0 0 30px rgba(124,92,252,.55)}
+.auth-note{text-align:center;margin-top:14px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.social-divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:12px;color:var(--subtle)}
+.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{
+  width:100%;padding:10px 13px;border-radius:9px;
+  background:var(--s2);border:1px solid var(--border2);color:var(--text);
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.btn-google:hover{background:var(--s3);border-color:var(--border2)}
+
+/* ═══════════════════════════════════════
+   PAGE 3 — DASHBOARD
+═══════════════════════════════════════ */
+.dash-wrap{min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.topbar{
+  background:var(--s1);border-bottom:1px solid var(--border);
+  padding:12px 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:30;flex-shrink:0;
+}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-divider{width:1px;height:18px;background:var(--border)}
+.pg-label{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--text)}
+.pg-sub{font-size:11px;color:var(--muted)}
+.tb-nav-btn{
+  font-size:12px;font-weight:500;padding:6px 13px;border-radius:8px;
+  background:var(--s2);border:1px solid var(--border);color:var(--muted);
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;
+}
+.tb-nav-btn:hover{border-color:var(--border2);color:var(--text)}
+.user-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:5px 12px;cursor:pointer;
+}
+.uav{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;
+}
+.uname{font-size:12px;font-weight:600}
+
+/* stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 28px 0}
+.sc{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.sc-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.sc-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:1px}
+.sc-sub{font-size:11px;color:var(--muted)}
+
+/* input mode tabs */
+.mode-tabs{display:flex;gap:0;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:3px;width:fit-content;margin-bottom:18px}
+.mtab{
+  padding:7px 18px;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;color:var(--muted);border:none;background:transparent;
+  display:flex;align-items:center;gap:6px;
+}
+.mtab.act{background:var(--s1);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* voice record panel */
+.voice-panel{
+  display:flex;flex-direction:column;align-items:center;
+  padding:32px 24px;text-align:center;
+}
+.voice-ring{
+  position:relative;width:120px;height:120px;margin-bottom:24px;cursor:pointer;
+}
+.voice-ring-outer{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(34,211,238,.35);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;
+}
+.voice-ring-outer:hover{border-color:rgba(34,211,238,.65);box-shadow:0 0 28px rgba(34,211,238,.2)}
+.voice-ring-outer.recording{
+  border-color:var(--red);
+  box-shadow:0 0 0 0 rgba(248,113,113,.5);
+  animation:ring-pulse 1.2s ease infinite;
+}
+@keyframes ring-pulse{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 20px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+.voice-mic-btn{
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(34,211,238,.12);border:2px solid rgba(34,211,238,.4);
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  transition:all .3s;cursor:pointer;
+}
+.voice-mic-btn.recording{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.6)}
+.voice-status{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.voice-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:260px}
+.voice-waveform{
+  display:flex;align-items:center;gap:3px;height:40px;margin:16px 0;
+}
+.wbar{width:3px;border-radius:2px;background:var(--cyan);opacity:.4}
+.wbar.active{animation:wave .8s ease infinite;opacity:1}
+.wbar:nth-child(1){height:12px}.wbar:nth-child(2){height:22px;animation-delay:.1s}
+.wbar:nth-child(3){height:30px;animation-delay:.2s}.wbar:nth-child(4){height:38px;animation-delay:.3s}
+.wbar:nth-child(5){height:28px;animation-delay:.4s}.wbar:nth-child(6){height:36px;animation-delay:.5s}
+.wbar:nth-child(7){height:20px;animation-delay:.35s}.wbar:nth-child(8){height:14px;animation-delay:.15s}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.7)}}
+.voice-process-steps{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.vps{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:var(--s2);border:1px solid var(--border);padding:3px 8px;border-radius:5px}
+
+/* main grid */
+.dash-main{display:grid;grid-template-columns:1fr 400px;gap:14px;padding:14px 28px 28px;flex:1}
+
+/* input panel */
+.inp-panel{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:22px}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.pt{font-size:15px;font-weight:700;color:#fff}
+.ps{font-size:11px;color:var(--muted);margin-top:2px}
+.demo-btn{
+  font-size:12px;font-weight:600;padding:6px 13px;border-radius:8px;
+  background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);color:var(--cyan);
+  cursor:pointer;transition:all .15s;font-family:'Space Grotesk',sans-serif;
+}
+.demo-btn:hover{background:rgba(34,211,238,.18)}
+.fg2{margin-bottom:16px}
+.fgt{
+  font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.16em;
+  color:var(--subtle);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border);
+}
+.fi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.fiw{display:flex;flex-direction:column;gap:3px}
+.fil{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fin{
+  width:100%;padding:6px 9px;
+  background:var(--s2);border:1px solid var(--border);border-radius:7px;
+  color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s;
+}
+.fin:focus{border-color:rgba(124,92,252,.55)}
+.fin.filled{border-color:rgba(124,92,252,.28);background:rgba(124,92,252,.04)}
+.pred-btn{
+  width:100%;padding:13px;border-radius:12px;
+  background:linear-gradient(135deg,var(--purple),#9d6efc);color:#fff;
+  font-size:15px;font-weight:700;border:none;cursor:pointer;margin-top:14px;
+  box-shadow:0 4px 22px rgba(124,92,252,.42);transition:all .22s;
+  font-family:'Syne',sans-serif;
+}
+.pred-btn:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(124,92,252,.55)}
+
+/* results */
+.res-panel{display:flex;flex-direction:column;gap:10px}
+
+/* empty state */
+.empty-state{
+  flex:1;background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:40px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+.es-icon{font-size:44px;margin-bottom:14px;opacity:.35}
+.es-title{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.es-sub{font-size:12px;color:var(--subtle);line-height:1.6}
+.es-hint{margin-top:18px;padding:10px 14px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--subtle);font-family:'JetBrains Mono',monospace}
+
+/* result card */
+.rcard{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;
+  position:relative;overflow:hidden;
+}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--amber),var(--red))}
+.rcard.ok::before{background:linear-gradient(90deg,var(--green),var(--cyan),var(--green))}
+.rtop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.rlabel{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:5px}
+.rtext{font-family:'Syne',sans-serif;font-size:19px;font-weight:800}
+.rtext.det{color:var(--red)}.rtext.hlt{color:var(--green)}
+.rbadge{padding:4px 11px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}
+.rh{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:var(--red)}
+.rm{background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);color:var(--amber)}
+.rl{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:var(--green)}
+.conf-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.cring{position:relative;width:68px;height:68px;flex-shrink:0}
+.cring svg{transform:rotate(-90deg)}
+.cr-bg{fill:none;stroke:var(--s3);stroke-width:6}
+.cr-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+.cr-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800}
+.conf-info-label{font-size:11px;color:var(--muted);margin-bottom:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+.conf-info-val{font-size:24px;font-weight:800;font-family:'Syne',sans-serif}
+.conf-info-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.dl-btn{
+  width:100%;padding:9px;border-radius:9px;
+  background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.32);color:var(--green);
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.dl-btn:hover{background:rgba(74,222,128,.18)}
+.reset-btn{
+  width:100%;padding:8px;margin-top:8px;border-radius:8px;
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;
+}
+.reset-btn:hover{background:var(--s2);color:var(--text)}
+
+/* ai card */
+.ai-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;
+  position:relative;overflow:hidden;
+}
+.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--pink),var(--purple))}
+.ai-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ai-title-r{display:flex;align-items:center;gap:8px}
+.ai-ico{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,rgba(124,92,252,.3),rgba(244,114,182,.2));border:1px solid rgba(124,92,252,.3);display:flex;align-items:center;justify-content:center;font-size:13px}
+.ai-t{font-size:13px;font-weight:700;color:#fff}
+.gm-badge{display:flex;align-items:center;gap:5px;background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.25);border-radius:20px;padding:3px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--purple2)}
+.gm-dot{width:5px;height:5px;border-radius:50%;background:var(--purple);animation:pulse 1.5s infinite}
+.ai-txt{font-size:12px;color:var(--muted);line-height:1.72;margin-bottom:10px}
+.ai-buls{display:flex;flex-direction:column;gap:5px}
+.ai-bul{display:flex;align-items:flex-start;gap:7px;background:var(--s2);border-radius:7px;padding:7px 9px;font-size:11px;color:var(--muted);line-height:1.55}
+.ai-bul-i{font-size:13px;flex-shrink:0;margin-top:-1px}
+.ai-disc{margin-top:10px;padding:7px 10px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.15);border-radius:6px;font-size:10px;color:rgba(251,191,36,.7);font-family:'JetBrains Mono',monospace}
+
+/* recent bar */
+.rec-bar{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:12px 18px;margin:0 28px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rec-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex-shrink:0}
+.rec-items{display:flex;gap:7px;flex-wrap:wrap}
+.rec-item{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:11px}
+
+/* ═══════════════════════════════════════
+   PAGE 4 — CHAT
+═══════════════════════════════════════ */
+.chat-wrap{height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.chat-bar{
+  background:var(--s1);border-bottom:1px solid var(--border);
+  padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.chat-bar-l{display:flex;align-items:center;gap:10px}
+.cav{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ct{font-size:13px;font-weight:700;color:#fff}
+.cs{font-size:11px;color:var(--muted);margin-top:1px}
+.online{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-family:'JetBrains Mono',monospace}
+.online::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green)}
+.ctx-banner{
+  margin:10px 24px 0;
+  background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.28);border-radius:10px;
+  padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.ctx-text{font-size:12px;color:var(--purple2)}
+.ctx-btn{font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;background:rgba(124,92,252,.2);border:1px solid rgba(124,92,252,.4);color:var(--purple2);cursor:pointer;white-space:nowrap;font-family:'Space Grotesk',sans-serif}
+.msgs{flex:1;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:12px}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.mrow{display:flex;gap:8px;max-width:680px}
+.mrow.u{flex-direction:row-reverse;margin-left:auto}
+.mav{width:28px;height:28px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.mav-ai{background:linear-gradient(135deg,var(--purple),var(--pink))}
+.mav-u{background:var(--s3);border:1px solid var(--border2);font-size:10px;font-weight:700}
+.mbub{padding:10px 14px;border-radius:13px;font-size:13px;line-height:1.65;max-width:520px}
+.bai{background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:13px 13px 13px 3px}
+.bu{background:var(--purple);color:#fff;border-radius:13px 13px 3px 13px}
+.mtime{font-size:10px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.mrow.u .mtime{text-align:right}
+.typing-ind{display:flex;align-items:center;gap:4px;padding:10px 14px;background:var(--s2);border:1px solid var(--border);border-radius:13px 13px 13px 3px;width:fit-content}
+.td{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:typ .9s ease infinite}
+.td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
+@keyframes typ{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1);opacity:1}}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:10px 24px}
+.chip{padding:7px 14px;border-radius:20px;background:var(--s2);border:1px solid var(--border2);font-size:12px;color:var(--purple2);cursor:pointer;transition:all .15s;font-weight:500}
+.chip:hover{background:rgba(124,92,252,.12);border-color:rgba(124,92,252,.38)}
+.chat-inp-bar{background:var(--s1);border-top:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.cinp{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:11px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .15s}
+.cinp:focus{border-color:rgba(124,92,252,.55)}
+.cinp::placeholder{color:var(--subtle)}
+.send-b{width:40px;height:40px;border-radius:9px;background:var(--purple);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:all .15s;flex-shrink:0;box-shadow:0 2px 12px rgba(124,92,252,.35)}
+.send-b:hover{background:#8b6dfd}
+
+/* ═══════════════════════════════════════
+   PAGE 5 — REPORTS / HISTORY
+═══════════════════════════════════════ */
+.rep-wrap{min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+.rep-main{padding:20px 28px 40px;flex:1}
+.rep-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.rep-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.rep-sub{font-size:13px;color:var(--muted)}
+/* summary cards */
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.sumc{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.sumc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sumc-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.sumc-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:2px}
+.sumc-sub{font-size:11px;color:var(--muted)}
+/* filter bar */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-label{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.fbtn{
+  padding:5px 13px;border-radius:7px;font-size:12px;font-weight:600;
+  background:var(--s2);border:1px solid var(--border);color:var(--muted);
+  cursor:pointer;transition:all .15s;
+}
+.fbtn:hover{border-color:var(--border2);color:var(--text)}
+.fbtn.act{background:rgba(124,92,252,.12);border-color:rgba(124,92,252,.4);color:var(--purple2)}
+/* search */
+.rep-search{
+  flex:1;max-width:280px;padding:7px 12px;
+  background:var(--s2);border:1px solid var(--border2);border-radius:9px;
+  color:var(--text);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;
+  transition:border-color .15s;
+}
+.rep-search:focus{border-color:rgba(124,92,252,.5)}
+.rep-search::placeholder{color:var(--subtle)}
+/* table */
+.rep-table-wrap{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.rep-table{width:100%;border-collapse:collapse}
+.rep-table th{
+  font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);padding:12px 16px;text-align:left;
+  background:var(--s2);border-bottom:1px solid var(--border);font-weight:500;
+}
+.rep-table td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.rep-table tr:last-child td{border-bottom:none}
+.rep-table tr:hover td{background:rgba(255,255,255,.015)}
+/* badges */
+.rb-det{color:var(--red);background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.rb-hlt{color:var(--green);background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.risk-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.conf-bar-wrap{width:80px;background:var(--s3);border-radius:3px;height:5px;overflow:hidden}
+.conf-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.td-dl-btn{
+  padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;
+  background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);color:var(--green);
+  cursor:pointer;transition:all .15s;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:4px;
+}
+.td-dl-btn:hover{background:rgba(74,222,128,.16)}
+.td-view-btn{
+  padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;
+  background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.25);color:var(--purple2);
+  cursor:pointer;transition:all .15s;font-family:'Space Grotesk',sans-serif;
+}
+.td-view-btn:hover{background:rgba(124,92,252,.16)}
+/* report preview modal */
+.rep-modal-bg{
+  position:fixed;inset:0;background:rgba(3,5,8,.88);
+  z-index:500;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.rep-modal-bg.open{display:flex}
+.rep-modal{
+  background:var(--s1);border:1px solid var(--border2);border-radius:20px;
+  width:90%;max-width:640px;max-height:88vh;overflow-y:auto;padding:28px;
+  position:relative;
+}
+.rep-modal::-webkit-scrollbar{width:3px}
+.rep-modal::-webkit-scrollbar-thumb{background:var(--s3)}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  width:30px;height:30px;border-radius:8px;
+  background:var(--s2);border:1px solid var(--border);
+  color:var(--muted);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:var(--s3);color:var(--text)}
+.modal-header{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.modal-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.report-section{margin-bottom:18px}
+.rs-title{
+  font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--purple2);margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.rs-title::after{content:'';flex:1;height:1px;background:rgba(124,92,252,.2)}
+.rs-content{font-size:13px;color:var(--muted);line-height:1.72}
+.rs-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.rs-row:last-child{border-bottom:none}
+.rs-row span:first-child{color:var(--muted)}
+.rs-row span:last-child{font-weight:600;color:var(--text)}
+.rs-bullet{display:flex;align-items:flex-start;gap:7px;margin-bottom:7px;font-size:13px;color:var(--muted);line-height:1.6}
+.rs-bullet::before{content:'•';color:var(--purple2);flex-shrink:0}
+.modal-actions{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.pg-btns{display:flex;gap:4px}
+.pg-btn{width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px;transition:all .15s}
+.pg-btn:hover{background:var(--s2);border-color:var(--border2);color:var(--text)}
+.pg-btn.act{background:rgba(124,92,252,.15);border-color:rgba(124,92,252,.45);color:var(--purple2)}
+
+/* empty table */
+.empty-table{text-align:center;padding:48px 24px;color:var(--muted)}
+.et-icon{font-size:40px;margin-bottom:12px;opacity:.35}
+.et-text{font-size:14px;font-weight:600;margin-bottom:5px}
+.et-sub{font-size:12px;color:var(--subtle)}
+</style>
+</head>
+<body>
+
+<!-- DEMO NAV -->
+<div class="demo-nav">
+  <span class="demo-nav-logo">Med<span>Genix</span></span>
+  <button class="pb act" onclick="go('home',this)">01 Home</button>
+  <button class="pb" onclick="go('login',this)">02 Login</button>
+  <button class="pb" onclick="go('dash',this)">03 Dashboard</button>
+  <button class="pb" onclick="go('chat',this)">04 AI Chat</button>
+  <button class="pb" onclick="go('reports',this)">05 Reports</button>
+</div>
+
+<!-- ════════════════════════════════════
+     PAGE 1 · HOME
+════════════════════════════════════ -->
+<div class="page active" id="page-home">
+<div class="home-bg">
+  <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
+
+  <nav class="hnav">
+    <div class="logo">Med<em>Genix</em><span class="logo-dot"></span></div>
+    <div class="hnav-links">
+      <a href="#">Home</a><a href="#">Features</a><a href="#">About</a>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-o" onclick="go('login',document.querySelectorAll('.pb')[1])">Sign In</button>
+      <button class="btn-p" onclick="go('login',document.querySelectorAll('.pb')[1])">Get Started →</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge"><span class="badge-dot"></span>Powered by Google Gemini AI + Voice Analysis</div>
+    <h1>Generative AI<br><span class="grad">Clinical Assistant</span><br>for Parkinson's</h1>
+    <p class="hero-sub">Combining machine learning precision with real-time voice analysis and generative AI explanation — making early Parkinson's detection accessible to everyone.</p>
+    <div class="hero-btns">
+      <button class="btn-p" style="font-size:15px;padding:13px 30px" onclick="go('dash',document.querySelectorAll('.pb')[2])">Start Diagnosis →</button>
+      <button class="btn-o" style="font-size:15px;padding:13px 30px">View Sample Report</button>
+    </div>
+    <div class="trust-row">
+      <div class="trust-item"><span class="trust-dot"></span>95%+ ML Accuracy</div>
+      <div class="trust-item"><span class="trust-dot"></span>22 Voice Biomarkers</div>
+      <div class="trust-item"><span class="trust-dot"></span>Real-time Voice Recording</div>
+      <div class="trust-item"><span class="trust-dot"></span>Gemini AI Insights</div>
+      <div class="trust-item"><span class="trust-dot"></span>Clinical PDF Reports</div>
+    </div>
+  </div>
+
+  <!-- VOICE USP STRIP -->
+  <div class="voice-strip">
+    <div class="voice-strip-inner">
+      <div class="voice-icon-big">🎙️</div>
+      <div class="voice-strip-text" style="flex:1">
+        <h4>🔥 NEW — Real-time Voice Analysis</h4>
+        <p>Record your voice directly in the browser. Our system extracts 22 clinical biomarkers using Parselmouth (Praat) and runs instant Parkinson's prediction — no manual data entry needed.</p>
+        <div class="voice-flow">
+          <span class="vf-step">🎙️ Record Voice</span><span class="vf-arr">→</span>
+          <span class="vf-step">WebM → WAV</span><span class="vf-arr">→</span>
+          <span class="vf-step">Parselmouth</span><span class="vf-arr">→</span>
+          <span class="vf-step">22 Features</span><span class="vf-arr">→</span>
+          <span class="vf-step">ML Model</span><span class="vf-arr">→</span>
+          <span class="vf-step">AI Result</span>
+        </div>
+      </div>
+      <button class="btn-p" style="white-space:nowrap" onclick="go('dash',document.querySelectorAll('.pb')[2]);setTimeout(()=>switchMode('voice'),400)">Try Voice Detection</button>
+    </div>
+  </div>
+
+  <!-- GENAI CARDS -->
+  <div class="sec">
+    <div class="sec-eye">What makes us different</div>
+    <div class="sec-title">Powered by Generative AI</div>
+    <div class="sec-sub">Our system doesn't just predict — it explains, advises, and generates clinical documentation automatically.</div>
+    <div class="g3">
+      <div class="gc">
+        <div class="gc-icon" style="background:rgba(124,92,252,.15);border:1px solid rgba(124,92,252,.3)">🧠</div>
+        <div class="gc-title">AI Clinical Insight</div>
+        <div class="gc-desc">After every prediction, Gemini AI generates a personalized clinical explanation — observation, interpretation, and recommendation — in plain language.</div>
+        <span class="gc-tag">gemini-1.5-flash</span>
+      </div>
+      <div class="gc">
+        <div class="gc-icon" style="background:rgba(244,114,182,.12);border:1px solid rgba(244,114,182,.25)">💬</div>
+        <div class="gc-title">Medical Chat Assistant</div>
+        <div class="gc-desc">Ask any Parkinson's question, request a report explanation, or get guidance on next steps — all powered by Gemini with a medical context system prompt.</div>
+        <span class="gc-tag">conversational AI</span>
+      </div>
+      <div class="gc">
+        <div class="gc-icon" style="background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2)">📄</div>
+        <div class="gc-title">Smart PDF Reports</div>
+        <div class="gc-desc">AI-generated clinical summaries, risk assessments, key feature explanations, and personalized recommendations — all in one downloadable report.</div>
+        <span class="gc-tag">reportlab + gemini</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="sec" style="padding-top:0">
+    <div class="sec-eye">Full feature set</div>
+    <div class="sec-title">Everything in one system</div>
+    <div class="sec-sub" style="margin-bottom:22px">Voice recording, manual input, AI explanation, clinical reports, and history — all integrated.</div>
+    <div class="f6">
+      <div class="fc"><div class="fic" style="background:rgba(34,211,238,.1)">🎙️</div><div><div class="ft">Voice Recording</div><div class="fd">Record → extract 22 biomarkers → instant prediction via Parselmouth</div></div></div>
+      <div class="fc"><div class="fic" style="background:rgba(124,92,252,.12)">⚡</div><div><div class="ft">ML Prediction</div><div class="fd">Random Forest, SVM & Logistic Regression ensemble — 95%+ accuracy</div></div></div>
+      <div class="fc"><div class="fic" style="background:rgba(248,113,113,.1)">⚠️</div><div><div class="ft">Risk Stratification</div><div class="fd">HIGH / MODERATE / LOW risk with confidence score per prediction</div></div></div>
+      <div class="fc"><div class="fic" style="background:rgba(74,222,128,.1)">🗄️</div><div><div class="ft">MongoDB Records</div><div class="fd">Every prediction auto-saved with timestamp, risk level, and PDF filename</div></div></div>
+      <div class="fc"><div class="fic" style="background:rgba(244,114,182,.1)">🤖</div><div><div class="ft">Gemini AI Chat</div><div class="fd">Medical Q&A, report explanations, and clinical guidance in real time</div></div></div>
+      <div class="fc"><div class="fic" style="background:rgba(251,191,36,.1)">📊</div><div><div class="ft">Report History</div><div class="fd">View, filter, preview, and re-download all past clinical reports</div></div></div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="sec" style="padding-top:0">
+    <div class="sec-eye">Process</div>
+    <div class="sec-title">How it works</div>
+    <div class="h3">
+      <div class="hs">
+        <div class="hn" style="color:#22d3ee;border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.08)">1</div>
+        <div class="ht">Record or Enter Data</div>
+        <div class="hd">Record your voice for automatic feature extraction, or manually enter 22 biomarker values with demo data available</div>
+      </div>
+      <div class="hs">
+        <div class="hn" style="color:var(--purple2);border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.08)">2</div>
+        <div class="ht">ML Analysis</div>
+        <div class="hd">Random Forest model analyzes vocal patterns and returns prediction with confidence score and HIGH/MODERATE/LOW risk level</div>
+      </div>
+      <div class="hs">
+        <div class="hn" style="color:var(--pink);border-color:rgba(244,114,182,.4);background:rgba(244,114,182,.08)">3</div>
+        <div class="ht">AI Report & Guidance</div>
+        <div class="hd">Gemini AI explains results in plain language, generates a clinical PDF report, and you can chat with the medical AI for follow-up</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-banner">
+    <div><h3>Ready to run your first analysis?</h3><p>Voice recording + demo data included — no setup needed to test the full system</p></div>
+    <button class="btn-p" style="font-size:14px;padding:12px 26px;white-space:nowrap" onclick="go('dash',document.querySelectorAll('.pb')[2])">Open Dashboard →</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     PAGE 2 · LOGIN / REGISTER
+════════════════════════════════════ -->
+<div class="page" id="page-login">
+<div class="auth-bg">
+  <!-- left brand panel -->
+  <div class="auth-left">
+    <div class="auth-logo-row">
+      <div class="logo" style="font-size:24px">Med<em>Genix</em><span class="logo-dot"></span></div>
+      <div class="auth-tagline">AI-powered Parkinson's Disease Detection — Machine Learning + Generative AI + Voice Analysis</div>
+    </div>
+    <div class="auth-feature-list">
+      <div class="afl-item">
+        <div class="afl-icon" style="background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25)">🎙️</div>
+        <div class="afl-text"><strong>Voice Recording</strong>Record voice → auto-extract 22 biomarkers via Parselmouth</div>
+      </div>
+      <div class="afl-item">
+        <div class="afl-icon" style="background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25)">🧠</div>
+        <div class="afl-text"><strong>AI Clinical Insight</strong>Gemini AI explains every prediction in plain clinical language</div>
+      </div>
+      <div class="afl-item">
+        <div class="afl-icon" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25)">📄</div>
+        <div class="afl-text"><strong>PDF Reports</strong>Professional clinical reports with AI narrative, downloadable anytime</div>
+      </div>
+      <div class="afl-item">
+        <div class="afl-icon" style="background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25)">🗄️</div>
+        <div class="afl-text"><strong>Report History</strong>All predictions stored in MongoDB — view, filter, and re-download</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-divider"></div>
+
+  <!-- right form panel -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-card-title" id="auth-title">Welcome back</div>
+      <div class="auth-card-sub" id="auth-sub">Sign in to your clinical dashboard</div>
+
+      <div class="tab-row">
+        <button class="atab act" id="tab-si" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="atab" id="tab-su" onclick="switchAuthTab('signup')">Create Account</button>
+      </div>
+
+      <!-- SIGN IN -->
+      <div id="form-signin">
+        <div class="fg">
+          <label class="fl">Email Address</label>
+          <input class="fi" type="email" placeholder="doctor@hospital.com">
+        </div>
+        <div class="fg">
+          <label class="fl">Password</label>
+          <input class="fi" type="password" placeholder="••••••••">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer">
+            <input type="checkbox" style="accent-color:var(--purple)"> Remember me
+          </label>
+          <a href="#" style="font-size:12px;color:var(--purple2);text-decoration:none">Forgot password?</a>
+        </div>
+        <button class="btn-auth" onclick="go('dash',document.querySelectorAll('.pb')[2])">Sign In to Dashboard</button>
+        <div class="social-divider">or continue with</div>
+        <button class="btn-google">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-note">Demo mode — any credentials accepted</div>
+      </div>
+
+      <!-- SIGN UP -->
+      <div id="form-signup" style="display:none">
+        <div class="fg">
+          <label class="fl">Full Name</label>
+          <input class="fi" type="text" placeholder="Dr. Jane Smith">
+        </div>
+        <div class="fg">
+          <label class="fl">Email Address</label>
+          <input class="fi" type="email" placeholder="doctor@hospital.com">
+        </div>
+        <div class="fg">
+          <label class="fl">Password</label>
+          <input class="fi" type="password" placeholder="Min. 8 characters">
+        </div>
+        <div class="fg">
+          <label class="fl">Confirm Password</label>
+          <input class="fi" id="cpass" type="password" placeholder="Repeat password">
+          <div class="err" id="pass-err" style="display:none;margin-top:6px">Passwords do not match</div>
+        </div>
+        <button class="btn-auth" onclick="go('dash',document.querySelectorAll('.pb')[2])">Create Account</button>
+        <div class="auth-note">Demo mode — any credentials accepted</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     PAGE 3 · DASHBOARD
+════════════════════════════════════ -->
+<div class="page" id="page-dash">
+<div class="dash-wrap">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="logo" style="font-size:17px">Med<em>Genix</em><span class="logo-dot"></span></div>
+      <div class="tb-divider"></div>
+      <div><div class="pg-label">Clinical Dashboard</div><div class="pg-sub">Parkinson's Disease Detection</div></div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-nav-btn" onclick="go('chat',document.querySelectorAll('.pb')[3])">💬 AI Chat</button>
+      <button class="tb-nav-btn" onclick="go('reports',document.querySelectorAll('.pb')[4])">📋 Reports</button>
+      <div class="tb-divider"></div>
+      <div class="user-pill">
+        <div class="uav">D</div>
+        <span class="uname">demo@medgenix.ai</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="sc"><div class="sc-label">Total Predictions</div><div class="sc-val">247</div><div class="sc-sub">all time</div></div>
+    <div class="sc"><div class="sc-label">Model Accuracy</div><div class="sc-val" style="color:var(--green)">95.2%</div><div class="sc-sub">Random Forest</div></div>
+    <div class="sc"><div class="sc-label">High Risk Cases</div><div class="sc-val" style="color:var(--red)">38</div><div class="sc-sub">this month</div></div>
+    <div class="sc"><div class="sc-label">Reports Generated</div><div class="sc-val" style="color:var(--purple2)">189</div><div class="sc-sub">PDFs downloaded</div></div>
+  </div>
+
+  <div class="rec-bar">
+    <span class="rec-label">Recent</span>
+    <div class="rec-items">
+      <div class="rec-item" style="border-color:rgba(248,113,113,.3)"><span style="color:var(--red);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600">DETECTED</span><span style="color:var(--muted);font-size:10px">99% · HIGH · 2m ago</span></div>
+      <div class="rec-item" style="border-color:rgba(74,222,128,.3)"><span style="color:var(--green);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600">HEALTHY</span><span style="color:var(--muted);font-size:10px">72% · LOW · 1h ago</span></div>
+      <div class="rec-item" style="border-color:rgba(248,113,113,.3)"><span style="color:var(--red);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600">DETECTED</span><span style="color:var(--muted);font-size:10px">87% · MOD · 3h ago</span></div>
+    </div>
+    <button class="tb-nav-btn" style="margin-left:auto" onclick="go('reports',document.querySelectorAll('.pb')[4])">View All →</button>
+  </div>
+
+  <div class="dash-main">
+    <!-- INPUT PANEL -->
+    <div class="inp-panel">
+      <div class="ph">
+        <div><div class="pt">Voice Biomarker Analysis</div><div class="ps">Choose input method below</div></div>
+        <button class="demo-btn" id="demoBtn" onclick="fillDemo()">⚡ Load Demo Data</button>
+      </div>
+
+      <!-- MODE TABS -->
+      <div class="mode-tabs">
+        <button class="mtab act" id="mtab-manual" onclick="switchMode('manual')">✏️ Manual Input</button>
+        <button class="mtab" id="mtab-voice" onclick="switchMode('voice')">🎙️ Voice Recording</button>
+      </div>
+
+      <!-- MANUAL FORM -->
+      <div id="manual-panel">
+        <div class="fg2"><div class="fgt">MDVP Fundamental Frequency</div>
+          <div class="fi-grid">
+            <div class="fiw"><span class="fil">MDVP:Fo(Hz)</span><input class="fin" id="f0" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">MDVP:Fhi(Hz)</span><input class="fin" id="f1" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">MDVP:Flo(Hz)</span><input class="fin" id="f2" type="number" step="any" placeholder="—"></div>
+          </div>
+        </div>
+        <div class="fg2"><div class="fgt">Jitter Measures</div>
+          <div class="fi-grid">
+            <div class="fiw"><span class="fil">Jitter(%)</span><input class="fin" id="f3" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">Jitter(Abs)</span><input class="fin" id="f4" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">MDVP:RAP</span><input class="fin" id="f5" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">MDVP:PPQ</span><input class="fin" id="f6" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">Jitter:DDP</span><input class="fin" id="f7" type="number" step="any" placeholder="—"></div>
+          </div>
+        </div>
+        <div class="fg2"><div class="fgt">Shimmer Measures</div>
+          <div class="fi-grid">
+            <div class="fiw"><span class="fil">Shimmer</span><input class="fin" id="f8" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">Shimmer(dB)</span><input class="fin" id="f9" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">APQ3</span><input class="fin" id="f10" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">APQ5</span><input class="fin" id="f11" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">MDVP:APQ</span><input class="fin" id="f12" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">Shimmer:DDA</span><input class="fin" id="f13" type="number" step="any" placeholder="—"></div>
+          </div>
+        </div>
+        <div class="fg2"><div class="fgt">Noise &amp; Nonlinear Features</div>
+          <div class="fi-grid">
+            <div class="fiw"><span class="fil">NHR</span><input class="fin" id="f14" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">HNR</span><input class="fin" id="f15" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">RPDE</span><input class="fin" id="f16" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">DFA</span><input class="fin" id="f17" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">spread1</span><input class="fin" id="f18" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">spread2</span><input class="fin" id="f19" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">D2</span><input class="fin" id="f20" type="number" step="any" placeholder="—"></div>
+            <div class="fiw"><span class="fil">PPE</span><input class="fin" id="f21" type="number" step="any" placeholder="—"></div>
+          </div>
+        </div>
+        <button class="pred-btn" onclick="runPred()">Run Analysis →</button>
+      </div>
+
+      <!-- VOICE PANEL -->
+      <div id="voice-panel" style="display:none">
+        <div style="background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.18);border-radius:12px;padding:6px 12px;margin-bottom:16px;font-size:12px;color:var(--cyan);font-family:'JetBrains Mono',monospace">
+          🎙️ Uses MediaRecorder API → FFmpeg → Parselmouth (Praat) for feature extraction
+        </div>
+        <div class="voice-panel">
+          <div class="voice-ring" onclick="toggleRec()">
+            <div class="voice-ring-outer" id="voiceRing">
+              <div class="voice-mic-btn" id="voiceMic">🎙️</div>
+            </div>
+          </div>
+          <div class="voice-status" id="voiceStatus">Tap to start recording</div>
+          <div class="voice-sub" id="voiceSub">Speak clearly for 5–10 seconds. Say "ahhh" in a sustained tone for best results.</div>
+          <div class="voice-waveform" id="voiceWave">
+            <div class="wbar" id="wb0"></div><div class="wbar" id="wb1"></div>
+            <div class="wbar" id="wb2"></div><div class="wbar" id="wb3"></div>
+            <div class="wbar" id="wb4"></div><div class="wbar" id="wb5"></div>
+            <div class="wbar" id="wb6"></div><div class="wbar" id="wb7"></div>
+          </div>
+          <div class="voice-process-steps" id="vps">
+            <span class="vps">🎙 Record Audio</span>
+            <span class="vps">→ WebM → WAV</span>
+            <span class="vps">→ Parselmouth Extract</span>
+            <span class="vps">→ 22 Features</span>
+            <span class="vps">→ /voice-predict</span>
+          </div>
+          <button class="pred-btn" id="voiceAnalyzeBtn" style="margin-top:20px;display:none" onclick="runVoicePred()">Analyze Voice Recording →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="res-panel">
+      <div class="empty-state" id="emptyState">
+        <div class="es-icon">🧠</div>
+        <div class="es-title">No analysis yet</div>
+        <div class="es-sub">Choose Manual Input or Voice Recording<br>then click Run Analysis</div>
+        <div class="es-hint">⚡ Load Demo Data for instant preview</div>
+      </div>
+
+      <div class="rcard" id="rcard" style="display:none">
+        <div class="rtop">
+          <div>
+            <div class="rlabel">Diagnosis Result</div>
+            <div class="rtext det">Parkinson's Detected</div>
+          </div>
+          <div class="rbadge rh">HIGH RISK</div>
+        </div>
+        <div class="conf-row">
+          <div class="cring">
+            <svg width="68" height="68" viewBox="0 0 68 68">
+              <circle class="cr-bg" cx="34" cy="34" r="28"/>
+              <circle class="cr-fill" cx="34" cy="34" r="28" stroke="var(--red)" stroke-dasharray="175.9" stroke-dashoffset="17.6"/>
+            </svg>
+            <div class="cr-num">99%</div>
+          </div>
+          <div>
+            <div class="conf-info-label">Confidence</div>
+            <div class="conf-info-val">99%</div>
+            <div class="conf-info-sub">Random Forest</div>
+          </div>
+        </div>
+        <button class="dl-btn">↓ Download Clinical Report</button>
+        <button class="reset-btn" onclick="resetPred()">↺ New Analysis</button>
+      </div>
+
+      <div class="ai-card" id="aiCard" style="display:none">
+        <div class="ai-hdr">
+          <div class="ai-title-r">
+            <div class="ai-ico">🧬</div>
+            <div class="ai-t">AI Clinical Insight</div>
+          </div>
+          <div class="gm-badge"><span class="gm-dot"></span>Gemini</div>
+        </div>
+        <div class="ai-txt">Voice biomarker analysis reveals significant irregularities in fundamental frequency consistent with Parkinsonian speech. Elevated jitter and shimmer values indicate reduced vocal stability — a hallmark of early neuromuscular degeneration affecting the laryngeal muscles.</div>
+        <div class="ai-buls">
+          <div class="ai-bul"><span class="ai-bul-i">🔬</span><span><strong style="color:var(--text)">Observation:</strong> PPE (0.284) and spread1 (−4.813) indicate high pitch instability — primary Parkinson's vocal biomarkers.</span></div>
+          <div class="ai-bul"><span class="ai-bul-i">📋</span><span><strong style="color:var(--text)">Interpretation:</strong> Pattern matches early-stage Parkinsonian speech with 99% model confidence.</span></div>
+          <div class="ai-bul"><span class="ai-bul-i">💊</span><span><strong style="color:var(--text)">Recommendation:</strong> Consult a neurologist. Request UPDRS assessment and MRI if clinically indicated.</span></div>
+        </div>
+        <div class="ai-disc">⚠ AI-generated insight for screening purposes only. Not a substitute for professional medical diagnosis.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     PAGE 4 · AI CHAT
+════════════════════════════════════ -->
+<div class="page" id="page-chat">
+<div class="chat-wrap">
+  <div class="chat-bar">
+    <div class="chat-bar-l">
+      <div class="cav">🧠</div>
+      <div>
+        <div class="ct">MedGenix AI Assistant</div>
+        <div class="cs">Parkinson's disease · clinical guidance · report explanation</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="online">Gemini 1.5 Flash online</div>
+      <button class="tb-nav-btn" onclick="go('dash',document.querySelectorAll('.pb')[2])">← Dashboard</button>
+      <button class="tb-nav-btn" onclick="go('reports',document.querySelectorAll('.pb')[4])">📋 Reports</button>
+    </div>
+  </div>
+
+  <div class="ctx-banner" id="ctxBanner">
+    <div class="ctx-text">🔴 Recent prediction: <strong>Parkinson's Detected — 99% confidence, HIGH risk.</strong> Want a full explanation?</div>
+    <button class="ctx-btn" onclick="explainRep()">Explain My Result</button>
+  </div>
+
+  <div class="msgs" id="msgs">
+    <div class="mrow">
+      <div class="mav mav-ai">🧠</div>
+      <div>
+        <div class="mbub bai">Hello! I'm your <strong>MedGenix AI Assistant</strong> powered by Google Gemini. I can explain your voice biomarker results, answer Parkinson's disease questions, and guide you on next clinical steps. What would you like to know?</div>
+        <div class="mtime">Just now</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chips" id="chips">
+    <div class="chip" onclick="qsend(this,'What is Parkinson\'s disease?')">What is Parkinson's disease?</div>
+    <div class="chip" onclick="qsend(this,'How do voice biomarkers detect Parkinson\'s?')">How do voice biomarkers detect Parkinson's?</div>
+    <div class="chip" onclick="qsend(this,'What does HIGH risk mean?')">What does HIGH risk mean?</div>
+    <div class="chip" onclick="qsend(this,'What should I do after a positive result?')">What to do after a positive result?</div>
+    <div class="chip" onclick="qsend(this,'Explain jitter and shimmer features')">Explain jitter and shimmer</div>
+  </div>
+
+  <div class="chat-inp-bar">
+    <input class="cinp" id="cinp" placeholder="Ask about Parkinson's, your results, voice biomarkers..." onkeydown="if(event.key==='Enter')csend()">
+    <button class="send-b" onclick="csend()">→</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     PAGE 5 · REPORTS / HISTORY
+════════════════════════════════════ -->
+<div class="page" id="page-reports">
+<div class="rep-wrap">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="logo" style="font-size:17px">Med<em>Genix</em><span class="logo-dot"></span></div>
+      <div class="tb-divider"></div>
+      <div><div class="pg-label">Report History</div><div class="pg-sub">All predictions &amp; clinical reports</div></div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-nav-btn" onclick="go('dash',document.querySelectorAll('.pb')[2])">← Dashboard</button>
+      <button class="tb-nav-btn" onclick="go('chat',document.querySelectorAll('.pb')[3])">💬 AI Chat</button>
+      <div class="user-pill">
+        <div class="uav">D</div>
+        <span class="uname">demo@medgenix.ai</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rep-main">
+    <div class="rep-header">
+      <div>
+        <div class="rep-title">Clinical Report History</div>
+        <div class="rep-sub">All predictions stored in MongoDB · filter · preview · re-download</div>
+      </div>
+      <button class="btn-p" style="font-size:13px;padding:9px 20px" onclick="go('dash',document.querySelectorAll('.pb')[2])">+ New Analysis</button>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="sum-row">
+      <div class="sumc" style="--ac:var(--purple2)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--purple2)"></div>
+        <div class="sumc-label">Total Reports</div>
+        <div class="sumc-val" style="color:var(--purple2)">247</div>
+        <div class="sumc-sub">all time</div>
+      </div>
+      <div class="sumc">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--red)"></div>
+        <div class="sumc-label">Parkinson's Detected</div>
+        <div class="sumc-val" style="color:var(--red)">189</div>
+        <div class="sumc-sub">76.5% of cases</div>
+      </div>
+      <div class="sumc">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
+        <div class="sumc-label">Healthy Results</div>
+        <div class="sumc-val" style="color:var(--green)">58</div>
+        <div class="sumc-sub">23.5% of cases</div>
+      </div>
+      <div class="sumc">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--red)"></div>
+        <div class="sumc-label">High Risk</div>
+        <div class="sumc-val" style="color:var(--red)">112</div>
+        <div class="sumc-sub">≥ 80% confidence</div>
+      </div>
+    </div>
+
+    <!-- FILTER + SEARCH -->
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="fbtn act" onclick="setFilter(this,'all')">All (247)</button>
+      <button class="fbtn" onclick="setFilter(this,'detected')" style="color:var(--muted)">Detected (189)</button>
+      <button class="fbtn" onclick="setFilter(this,'healthy')" style="color:var(--muted)">Healthy (58)</button>
+      <button class="fbtn" onclick="setFilter(this,'high')" style="color:var(--muted)">HIGH Risk (112)</button>
+      <button class="fbtn" onclick="setFilter(this,'moderate')" style="color:var(--muted)">MODERATE (67)</button>
+      <button class="fbtn" onclick="setFilter(this,'low')" style="color:var(--muted)">LOW (68)</button>
+      <input class="rep-search" placeholder="🔍 Search by date or result...">
+    </div>
+
+    <!-- TABLE -->
+    <div class="rep-table-wrap">
+      <table class="rep-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date &amp; Time</th>
+            <th>Result</th>
+            <th>Confidence</th>
+            <th>Risk Level</th>
+            <th>Input Method</th>
+            <th>Report File</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="repTbody"></tbody>
+      </table>
+      <div class="pagination">
+        <span>Showing 1–10 of 247 reports</span>
+        <div class="pg-btns">
+          <button class="pg-btn act">1</button>
+          <button class="pg-btn">2</button>
+          <button class="pg-btn">3</button>
+          <button class="pg-btn">…</button>
+          <button class="pg-btn">25</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT PREVIEW MODAL -->
+<div class="rep-modal-bg" id="repModal" onclick="closeModal(event)">
+  <div class="rep-modal">
+    <button class="modal-close" onclick="document.getElementById('repModal').classList.remove('open')">✕</button>
+    <div class="modal-header">
+      <div class="modal-title">MedGenix AI Clinical Report</div>
+      <div class="modal-date" id="modalDate">Generated: 2026-03-29 14:30:22</div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">Patient Details</div>
+      <div class="rs-row"><span>Report ID</span><span>MedGenix_Report_20260329_143022</span></div>
+      <div class="rs-row"><span>Generated</span><span>2026-03-29 14:30:22</span></div>
+      <div class="rs-row"><span>Input Method</span><span id="modalMethod">Voice Recording</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">AI Prediction Summary</div>
+      <div class="rs-row"><span>Result</span><span style="color:var(--red);font-weight:700" id="modalResult">Parkinson's Detected</span></div>
+      <div class="rs-row"><span>Confidence</span><span id="modalConf">99.0%</span></div>
+      <div class="rs-row"><span>Risk Level</span><span style="color:var(--red);font-weight:700" id="modalRisk">HIGH</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">Model Analysis</div>
+      <div class="rs-content">The prediction is based on patterns observed in voice biomarkers such as pitch variation (MDVP:Fo), amplitude instability (Shimmer), and frequency irregularities (Jitter). The Random Forest ensemble model analyzed all 22 features simultaneously.</div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">Key Contributing Features</div>
+      <div class="rs-bullet">PPE → Indicates pitch instability (value: 0.284)</div>
+      <div class="rs-bullet">spread1 → Reflects non-linear vocal variation (value: −4.813)</div>
+      <div class="rs-bullet">MDVP:Fo → Represents fundamental frequency variation</div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">AI Clinical Insight</div>
+      <div class="rs-content">Based on analysis of voice biomarkers, the system detects irregularities commonly associated with Parkinsonian speech patterns. These may indicate early-stage neuromuscular changes affecting vocal control. The elevated jitter and shimmer values suggest reduced laryngeal muscle control.</div>
+    </div>
+
+    <div class="report-section">
+      <div class="rs-title">Recommendations</div>
+      <div class="rs-bullet">Consult a neurologist for professional clinical evaluation</div>
+      <div class="rs-bullet">Perform UPDRS clinical assessment</div>
+      <div class="rs-bullet">Consider MRI or DaTscan imaging if clinically indicated</div>
+      <div class="rs-bullet">Monitor speech changes regularly over the next 3–6 months</div>
+    </div>
+
+    <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:rgba(251,191,36,.8);font-family:'JetBrains Mono',monospace;margin-bottom:16px">
+      ⚠ This report is generated using AI-based analysis for screening purposes only. It should not replace professional medical diagnosis.
+    </div>
+
+    <div class="modal-actions">
+      <button class="dl-btn" style="flex:1">↓ Download PDF Report</button>
+      <button class="ctx-btn" onclick="go('chat',document.querySelectorAll('.pb')[3])" style="padding:10px 16px">💬 Ask AI about this</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── NAV
+function go(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('act'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn) btn.classList.add('act');
+  window.scrollTo(0,0);
+}
+
+// ── AUTH TABS
+function switchAuthTab(t){
+  document.getElementById('tab-si').classList.toggle('act',t==='signin');
+  document.getElementById('tab-su').classList.toggle('act',t==='signup');
+  document.getElementById('form-signin').style.display=t==='signin'?'block':'none';
+  document.getElementById('form-signup').style.display=t==='signup'?'block':'none';
+  document.getElementById('auth-title').textContent=t==='signin'?'Welcome back':'Create account';
+  document.getElementById('auth-sub').textContent=t==='signin'?'Sign in to your clinical dashboard':'Join MedGenix today';
+}
+
+// ── MODE TABS
+function switchMode(m){
+  document.getElementById('mtab-manual').classList.toggle('act',m==='manual');
+  document.getElementById('mtab-voice').classList.toggle('act',m==='voice');
+  document.getElementById('manual-panel').style.display=m==='manual'?'block':'none';
+  document.getElementById('voice-panel').style.display=m==='voice'?'block':'none';
+  document.getElementById('demoBtn').style.display=m==='manual'?'':'none';
+}
+
+// ── DEMO DATA
+const DEMO=[119.992,157.302,74.997,0.00784,0.00007,0.0037,0.00554,0.01109,0.04374,0.42600,0.02182,0.03130,0.02971,0.06545,0.02211,21.033,0.414783,0.815285,-4.813031,0.266482,2.301442,0.284654];
+function fillDemo(){
+  DEMO.forEach((v,i)=>{const e=document.getElementById('f'+i);if(e){e.value=v;e.classList.add('filled')}});
+  const b=document.getElementById('demoBtn');
+  b.textContent='✓ Demo Loaded';b.style.color='var(--green)';b.style.borderColor='rgba(74,222,128,.4)';
+}
+
+// ── VOICE RECORDING
+let recState=false,recTimer=null,recCount=0;
+function toggleRec(){
+  recState=!recState;
+  const ring=document.getElementById('voiceRing');
+  const mic=document.getElementById('voiceMic');
+  const status=document.getElementById('voiceStatus');
+  const sub=document.getElementById('voiceSub');
+  const bars=document.querySelectorAll('.wbar');
+  const analyzeBtn=document.getElementById('voiceAnalyzeBtn');
+  if(recState){
+    ring.classList.add('recording');mic.classList.add('recording');
+    mic.textContent='⏹️';
+    status.textContent='Recording... speak clearly';status.style.color='var(--red)';
+    sub.textContent='Recording in progress. Say "ahhh" in a sustained tone.';
+    bars.forEach(b=>b.classList.add('active'));
+    recCount=0;
+    recTimer=setInterval(()=>{
+      recCount++;
+      status.textContent=`Recording... ${recCount}s`;
+      if(recCount>=8){toggleRec()}
+    },1000);
+  } else {
+    ring.classList.remove('recording');mic.classList.remove('recording');
+    mic.textContent='🎙️';
+    clearInterval(recTimer);
+    bars.forEach(b=>b.classList.remove('active'));
+    if(recCount>0){
+      status.textContent=`✓ ${recCount}s recorded — ready to analyze`;
+      status.style.color='var(--green)';
+      sub.textContent='Recording saved. Click "Analyze Voice Recording" to run prediction.';
+      analyzeBtn.style.display='block';
+    } else {
+      status.textContent='Tap to start recording';
+      status.style.color='';
+      sub.textContent='Speak clearly for 5–10 seconds.';
+    }
+  }
+}
+function runVoicePred(){
+  const btn=document.getElementById('voiceAnalyzeBtn');
+  btn.textContent='Processing voice... ';btn.style.opacity='.7';
+  document.getElementById('voiceStatus').textContent='Extracting features via Parselmouth...';
+  setTimeout(()=>{
+    btn.textContent='Analyze Voice Recording →';btn.style.opacity='1';
+    showResult();
+  },2200);
+}
+
+// ── PREDICTION
+function runPred(){
+  const btn=document.querySelector('.pred-btn');
+  btn.textContent='Analyzing...';btn.style.opacity='.7';
+  setTimeout(()=>{btn.textContent='Run Analysis →';btn.style.opacity='1';showResult();},1600);
+}
+function showResult(){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('rcard').style.display='block';
+  document.getElementById('aiCard').style.display='block';
+  document.getElementById('rcard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function resetPred(){
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('rcard').style.display='none';
+  document.getElementById('aiCard').style.display='none';
+  for(let i=0;i<22;i++){const e=document.getElementById('f'+i);if(e){e.value='';e.classList.remove('filled')}}
+  const b=document.getElementById('demoBtn');
+  b.textContent='⚡ Load Demo Data';b.style.color='';b.style.borderColor='';
+}
+
+// ── CHAT
+const replies=[
+  "Parkinson's disease is a progressive neurological disorder affecting the nervous system. Voice biomarkers like jitter, shimmer, and PPE detect early vocal changes that often precede motor symptoms by years — making voice analysis one of the most promising non-invasive screening tools.",
+  "Voice biomarkers work by measuring micro-variations in speech patterns. In Parkinson's patients, reduced dopamine affects the laryngeal muscles controlling speech, leading to measurable changes: jitter (frequency variation), shimmer (amplitude variation), and PPE (pitch instability). Our system analyzes all 22 of these features simultaneously.",
+  "HIGH risk means the model detected patterns strongly associated with Parkinson's disease with confidence ≥80%. This is a screening result — not a diagnosis. It means you should consult a movement disorder neurologist for a comprehensive clinical evaluation including UPDRS assessment and possibly DaTscan imaging.",
+  "After a positive result: (1) Consult a movement disorder neurologist, (2) Request a UPDRS clinical assessment, (3) Consider MRI or DaTscan imaging if indicated, (4) Monitor speech changes regularly. Early intervention with medication like levodopa significantly improves quality of life outcomes.",
+  "Jitter measures the cycle-to-cycle variation in the fundamental frequency of the voice. Shimmer measures the variation in amplitude between consecutive cycles. Both are elevated in Parkinson's patients because the disease affects the precise neuromuscular control needed for smooth, consistent vocal production."
+];
+let ri=0;
+function csend(){
+  const inp=document.getElementById('cinp');const t=inp.value.trim();
+  if(!t)return;
+  addMsg('u',t);inp.value='';
+  document.getElementById('chips').style.display='none';
+  showTyping();
+  setTimeout(()=>{hideTyping();addMsg('ai',replies[ri%replies.length]);ri++;},1200+Math.random()*700);
+}
+function qsend(el,t){document.getElementById('cinp').value=t;csend()}
+function explainRep(){
+  document.getElementById('ctxBanner').style.display='none';
+  document.getElementById('cinp').value="Explain my Parkinson's Detected result — 99% confidence, HIGH risk. What does this mean for me?";
+  csend();
+}
+function addMsg(role,t){
+  const area=document.getElementById('msgs');
+  const isU=role==='u';
+  const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');
+  d.className='mrow'+(isU?' u':'');
+  d.innerHTML=`<div class="mav ${isU?'mav-u':'mav-ai'}">${isU?'D':'🧠'}</div><div><div class="mbub ${isU?'bu':'bai'}">${t}</div><div class="mtime">${now}</div></div>`;
+  area.appendChild(d);area.scrollTop=area.scrollHeight;
+}
+function showTyping(){
+  const area=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='mrow';d.id='typrow';
+  d.innerHTML=`<div class="mav mav-ai">🧠</div><div class="typing-ind"><span class="td"></span><span class="td"></span><span class="td"></span></div>`;
+  area.appendChild(d);area.scrollTop=area.scrollHeight;
+}
+function hideTyping(){const t=document.getElementById('typrow');if(t)t.remove()}
+
+// ── REPORT TABLE
+const RDATA=[
+  {id:247,date:'2026-03-29',time:'14:30',result:'detected',conf:99,risk:'high',method:'voice',file:'MedGenix_Report_20260329_143022.pdf'},
+  {id:246,date:'2026-03-29',time:'11:15',result:'healthy',conf:72,risk:'low',method:'manual',file:'MedGenix_Report_20260329_111500.pdf'},
+  {id:245,date:'2026-03-28',time:'16:44',result:'detected',conf:87,risk:'moderate',method:'manual',file:'MedGenix_Report_20260328_164400.pdf'},
+  {id:244,date:'2026-03-28',time:'09:20',result:'detected',conf:94,risk:'high',method:'voice',file:'MedGenix_Report_20260328_092000.pdf'},
+  {id:243,date:'2026-03-27',time:'15:05',result:'healthy',conf:61,risk:'low',method:'manual',file:'MedGenix_Report_20260327_150500.pdf'},
+  {id:242,date:'2026-03-27',time:'10:30',result:'detected',conf:91,risk:'high',method:'voice',file:'MedGenix_Report_20260327_103000.pdf'},
+  {id:241,date:'2026-03-26',time:'14:00',result:'detected',conf:78,risk:'moderate',method:'manual',file:'MedGenix_Report_20260326_140000.pdf'},
+  {id:240,date:'2026-03-26',time:'08:45',result:'healthy',conf:55,risk:'low',method:'manual',file:'MedGenix_Report_20260326_084500.pdf'},
+  {id:239,date:'2026-03-25',time:'17:20',result:'detected',conf:96,risk:'high',method:'voice',file:'MedGenix_Report_20260325_172000.pdf'},
+  {id:238,date:'2026-03-25',time:'13:10',result:'detected',conf:83,risk:'high',method:'manual',file:'MedGenix_Report_20260325_131000.pdf'},
+];
+const riskCfg={
+  high:{label:'HIGH',color:'var(--red)',bg:'rgba(248,113,113,.15)',bc:'rgba(248,113,113,.35)'},
+  moderate:{label:'MOD',color:'var(--amber)',bg:'rgba(251,191,36,.15)',bc:'rgba(251,191,36,.35)'},
+  low:{label:'LOW',color:'var(--green)',bg:'rgba(74,222,128,.15)',bc:'rgba(74,222,128,.35)'}
+};
+function renderTable(data){
+  const tb=document.getElementById('repTbody');
+  tb.innerHTML=data.map(r=>{
+    const rc=riskCfg[r.risk];
+    const confColor=r.conf>=80?'var(--red)':r.conf>=60?'var(--amber)':'var(--green)';
+    const mIcon=r.method==='voice'?'🎙️':'✏️';
+    return `<tr>
+      <td style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px">#${r.id}</td>
+      <td><div style="font-size:13px;color:var(--text)">${r.date}</div><div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">${r.time}</div></td>
+      <td>${r.result==='detected'?`<span class="rb-det">Detected</span>`:`<span class="rb-hlt">Healthy</span>`}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="conf-bar-wrap"><div class="conf-bar-fill" style="width:${r.conf}%;background:${confColor}"></div></div>
+          <span style="font-size:12px;font-weight:600;color:${confColor};font-family:'JetBrains Mono',monospace">${r.conf}%</span>
+        </div>
+      </td>
+      <td><span class="risk-pill" style="color:${rc.color};background:${rc.bg};border:1px solid ${rc.bc}">${rc.label}</span></td>
+      <td><span style="font-size:12px;color:var(--muted)">${mIcon} ${r.method==='voice'?'Voice':'Manual'}</span></td>
+      <td><span style="font-size:10px;color:var(--subtle);font-family:'JetBrains Mono',monospace">${r.file.replace('MedGenix_Report_','').replace('.pdf','')}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="td-view-btn" onclick="openModal(${r.id})">👁 View</button>
+          <button class="td-dl-btn">↓ PDF</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+renderTable(RDATA);
+
+function setFilter(btn,f){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  if(f==='all') renderTable(RDATA);
+  else if(f==='detected') renderTable(RDATA.filter(r=>r.result==='detected'));
+  else if(f==='healthy') renderTable(RDATA.filter(r=>r.result==='healthy'));
+  else renderTable(RDATA.filter(r=>r.risk===f));
+}
+
+function openModal(id){
+  const r=RDATA.find(x=>x.id===id);
+  if(!r)return;
+  document.getElementById('modalDate').textContent=`Generated: ${r.date} ${r.time}:00`;
+  document.getElementById('modalResult').textContent=r.result==='detected'?"Parkinson's Detected":"Healthy";
+  document.getElementById('modalResult').style.color=r.result==='detected'?'var(--red)':'var(--green)';
+  document.getElementById('modalConf').textContent=r.conf+'%';
+  document.getElementById('modalRisk').textContent=riskCfg[r.risk].label;
+  document.getElementById('modalRisk').style.color=riskCfg[r.risk].color;
+  document.getElementById('modalMethod').textContent=r.method==='voice'?'🎙️ Voice Recording':'✏️ Manual Input';
+  document.getElementById('repModal').classList.add('open');
+}
+function closeModal(e){if(e.target===document.getElementById('repModal'))document.getElementById('repModal').classList.remove('open')}
+</script>
+</body>
+</html>
